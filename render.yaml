@@ -1,0 +1,30 @@
+services:
+  # Node.js Backend API
+  - type: web
+    name: licensly-api
+    env: node
+    buildCommand: "cd apps/api && npm ci && npm run build"
+    startCommand: "cd apps/api && npm start"
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: NODE_ENV
+        value: production
+
+  # Fast API Python Microservice
+  - type: web
+    name: licensly-ai
+    env: python
+    buildCommand: "cd apps/ai-service && pip install -r requirements.txt"
+    startCommand: "cd apps/ai-service && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.10.0

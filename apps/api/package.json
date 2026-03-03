@@ -1,0 +1,45 @@
+{
+    "name": "apps-api",
+    "version": "1.0.0",
+    "private": true,
+    "main": "dist/index.js",
+    "scripts": {
+        "build": "tsc",
+        "start": "node dist/index.js",
+        "dev": "nodemon src/index.ts",
+        "test": "jest",
+        "test:watch": "jest --watch",
+        "lint": "eslint . --ext .ts"
+    },
+    "dependencies": {
+        "@sentry/node": "^10.41.0",
+        "@sentry/profiling-node": "^10.41.0",
+        "@supabase/supabase-js": "^2.39.0",
+        "axios": "^1.13.6",
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.5",
+        "express": "^4.18.3",
+        "express-rate-limit": "^7.2.0",
+        "helmet": "^7.1.0",
+        "node-cron": "^3.0.3",
+        "pdfkit": "^0.17.2",
+        "resend": "^6.9.3",
+        "winston": "^3.11.0",
+        "xlsx": "^0.18.5",
+        "zod": "^3.22.4"
+    },
+    "devDependencies": {
+        "@types/cors": "^2.8.17",
+        "@types/express": "^4.17.21",
+        "@types/jest": "^30.0.0",
+        "@types/node": "^20.11.24",
+        "@types/node-cron": "^3.0.11",
+        "@types/pdfkit": "^0.17.5",
+        "@types/supertest": "^7.2.0",
+        "jest": "^30.2.0",
+        "supertest": "^7.2.2",
+        "ts-jest": "^29.4.6",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.3.3"
+    }
+}
