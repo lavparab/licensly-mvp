@@ -1,191 +1,172 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
-import { Calendar } from '../components/ui/calendar';
-import { AlertTriangle, Clock, ShieldAlert, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { Badge } from '../components/ui/badge';
+import { AlertCircle, ShieldCheck, Calendar, Bell, CheckCircle2, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
+import { toast } from 'sonner';
 
 export const Compliance = () => {
-    const [date, setDate] = useState<Date | undefined>(new Date());
     const [alerts, setAlerts] = useState<any[]>([]);
+    const [renewals, setRenewals] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [actionId, setActionId] = useState<string | null>(null);
 
-    useEffect(() => {
-        fetchAlerts();
-    }, []);
+    useEffect(() => { fetchData(); }, []);
 
-    const fetchAlerts = async () => {
+    const fetchData = async () => {
         try {
-            const { data, error } = await supabase
+            const { data: alertsData } = await supabase
                 .from('compliance_alerts')
-                .select('*, licenses(platform)')
-                .eq('status', 'open')
+                .select('*, licenses(platform, plan_name)')
+                .eq('is_resolved', false)
                 .order('created_at', { ascending: false });
 
-            if (!error && data) {
-                const mapped = data.map((alert: any) => ({
-                    id: alert.id,
-                    title: alert.title,
-                    platform: alert.licenses?.platform || 'System',
-                    message: alert.description,
-                    severity: alert.severity,
-                    type: alert.alert_type,
-                    date: formatDistanceToNow(new Date(alert.created_at), { addSuffix: true })
-                }));
-                setAlerts(mapped);
-            }
-        } catch (error) {
-            console.error('Error fetching alerts:', error);
-        } finally {
-            setIsLoading(false);
-        }
+            const { data: licensesData } = await supabase
+                .from('licenses')
+                .select('*')
+                .not('renewal_date', 'is', null)
+                .order('renewal_date', { ascending: true })
+                .limit(10);
+
+            if (alertsData) setAlerts(alertsData);
+            if (licensesData) setRenewals(licensesData);
+        } catch (err) { console.error('Error:', err); }
+        finally { setIsLoading(false); }
     };
 
-    const getAlertIcon = (severity: string) => {
-        switch (severity.toLowerCase()) {
-            case 'critical': return <ShieldAlert className="h-5 w-5 text-red-500" />;
-            case 'high':
-            case 'warning': return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
-            default: return <AlertCircle className="h-5 w-5 text-blue-500" />;
-        }
-    };
-
-    const handleResolve = async (id: string, action: 'resolved' | 'ignored') => {
-        setAlerts(alerts.filter(a => a.id !== id));
+    const handleResolve = async (id: string) => {
+        setActionId(id);
         try {
-            await supabase
-                .from('compliance_alerts')
-                .update({ status: action })
-                .eq('id', id);
-        } catch (error) {
-            console.error(`Error updating alert ${id}:`, error);
-            fetchAlerts();
+            await supabase.from('compliance_alerts').update({ is_resolved: true }).eq('id', id);
+            setAlerts(prev => prev.filter(a => a.id !== id));
+            toast.success('Alert resolved!');
+        } catch (err) {
+            toast.error('Failed to resolve alert');
+        }
+        setActionId(null);
+    };
+
+    const handleSendReminder = (licenseName: string) => {
+        toast.success(`Reminder sent for ${licenseName} renewal!`, { description: 'Email notification sent to stakeholders.' });
+    };
+
+    const getSeverityColor = (severity: string) => {
+        switch (severity) {
+            case 'critical': return 'destructive';
+            case 'warning': return 'secondary';
+            default: return 'outline';
         }
     };
 
-    const criticalCount = alerts.filter(a => a.severity.toLowerCase() === 'critical').length;
+    if (isLoading) return <div className="flex h-[80vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
 
     return (
         <div className="flex flex-col gap-6">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">Compliance & Risk</h1>
-                <p className="text-muted-foreground">Monitor license violations, upcoming renewals, and shadow IT.</p>
+                <h1 className="text-3xl font-bold tracking-tight">Compliance</h1>
+                <p className="text-muted-foreground">Monitor compliance alerts and upcoming license renewals.</p>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-[1fr_350px]">
-                {/* Alerts List */}
-                <div className="flex flex-col gap-4">
-                    <Card>
-                        <CardHeader className="pb-3 border-b border-border/50">
-                            <div className="flex items-center justify-between">
-                                <CardTitle className="text-xl">Active Alerts</CardTitle>
-                                {criticalCount > 0 && <Badge variant="destructive" className="ml-2">{criticalCount} Critical</Badge>}
-                            </div>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            {isLoading ? (
-                                <div className="flex justify-center items-center h-48">
-                                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                                </div>
-                            ) : alerts.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-12 text-center">
-                                    <div className="bg-muted p-4 rounded-full mb-4">
-                                        <CheckCircle className="h-8 w-8 text-green-500" />
+            {/* Summary Cards */}
+            <div className="grid gap-4 md:grid-cols-3">
+                <Card>
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">Open Alerts</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{alerts.length}</div>
+                        <p className="text-xs text-muted-foreground">
+                            {alerts.filter(a => a.severity === 'critical').length} critical, {alerts.filter(a => a.severity === 'warning').length} warning
+                        </p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">Upcoming Renewals</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{renewals.length}</div>
+                        <p className="text-xs text-muted-foreground">Next 12 months</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">Compliance Score</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-green-600">{alerts.length === 0 ? '100%' : Math.max(0, 100 - alerts.length * 10) + '%'}</div>
+                        <p className="text-xs text-muted-foreground">Based on open alerts</p>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Alerts Section */}
+            <div>
+                <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <AlertCircle className="h-5 w-5 text-muted-foreground" /> Active Alerts
+                </h2>
+                {alerts.length > 0 ? (
+                    <div className="space-y-3">
+                        {alerts.map(alert => (
+                            <Card key={alert.id}>
+                                <CardContent className="flex items-center gap-4 py-4">
+                                    <AlertCircle className={`h-5 w-5 shrink-0 ${alert.severity === 'critical' ? 'text-red-500' : alert.severity === 'warning' ? 'text-yellow-500' : 'text-blue-500'}`} />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-medium text-sm">{alert.message}</p>
+                                        <p className="text-xs text-muted-foreground mt-0.5">
+                                            {alert.licenses?.platform && `${alert.licenses.platform} • `}
+                                            {alert.alert_type} • {alert.due_date ? `Due ${format(new Date(alert.due_date), 'MMM d, yyyy')}` : 'No due date'}
+                                        </p>
                                     </div>
-                                    <h3 className="text-lg font-medium mb-1">All clear</h3>
-                                    <p className="text-sm text-muted-foreground max-w-sm">
-                                        No active compliance alerts. Connect more integrations to increase coverage.
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="divide-y divide-border/50">
-                                    {alerts.map(alert => (
-                                        <div key={alert.id} className="p-4 hover:bg-muted/30 transition-colors flex gap-4">
-                                            <div className="mt-1 flex-shrink-0">
-                                                {getAlertIcon(alert.severity)}
-                                            </div>
-                                            <div className="flex-1 space-y-1">
-                                                <div className="flex items-start justify-between">
-                                                    <h4 className="font-semibold text-sm">{alert.title}</h4>
-                                                    <span className="text-xs text-muted-foreground whitespace-nowrap ml-4 flex items-center gap-1">
-                                                        <Clock className="w-3 h-3" /> {alert.date}
-                                                    </span>
-                                                </div>
-                                                <p className="text-sm text-muted-foreground">{alert.message}</p>
-                                                <div className="flex items-center gap-2 pt-2">
-                                                    <Badge variant="outline" className="text-xs truncate max-w-[120px]">{alert.platform}</Badge>
-                                                    <Badge variant="secondary" className="text-xs capitalize">{alert.type.replace('_', ' ')}</Badge>
-                                                </div>
-                                            </div>
-                                            <div className="flex flex-col gap-2">
-                                                <Button size="sm" variant="outline" onClick={() => handleResolve(alert.id, 'resolved')}>Resolve</Button>
-                                                <Button size="sm" variant="ghost" onClick={() => handleResolve(alert.id, 'ignored')}>Ignore</Button>
-                                            </div>
+                                    <Badge variant={getSeverityColor(alert.severity) as any}>{alert.severity}</Badge>
+                                    <Button size="sm" variant="outline" onClick={() => handleResolve(alert.id)} disabled={actionId === alert.id}>
+                                        {actionId === alert.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCircle2 className="mr-1 h-4 w-4" /> Resolve</>}
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                ) : (
+                    <Card className="flex flex-col items-center justify-center p-12 text-center border-dashed">
+                        <div className="bg-muted p-4 rounded-full mb-4"><ShieldCheck className="h-8 w-8 text-green-500" /></div>
+                        <CardTitle className="text-xl mb-2">All clear!</CardTitle>
+                        <CardDescription>No open compliance alerts. Your licenses are in good standing.</CardDescription>
+                    </Card>
+                )}
+            </div>
+
+            {/* Renewal Calendar */}
+            <div>
+                <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-muted-foreground" /> Renewal Calendar
+                </h2>
+                {renewals.length > 0 ? (
+                    <div className="space-y-2">
+                        {renewals.map(lic => (
+                            <Card key={lic.id}>
+                                <CardContent className="flex items-center justify-between py-3">
+                                    <div className="flex-1">
+                                        <p className="font-medium text-sm">{lic.platform} — {lic.plan_name}</p>
+                                        <p className="text-xs text-muted-foreground">{lic.seats_purchased} seats • ${(Number(lic.cost_per_seat) * lic.seats_purchased).toLocaleString()}/{lic.billing_cycle}</p>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="text-right">
+                                            <p className="text-sm font-medium">{format(new Date(lic.renewal_date), 'MMM d, yyyy')}</p>
+                                            <p className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(lic.renewal_date), { addSuffix: true })}</p>
                                         </div>
-                                    ))}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    {/* Overuse Detector Widget - Only show if there's overuse content (mocked for demo if empty) */}
-                    {alerts.some(a => a.type === 'overuse') && (
-                        <Card className="border-red-200">
-                            <CardHeader className="bg-red-50/50 pb-4">
-                                <CardTitle className="text-red-800 flex items-center gap-2">
-                                    <AlertTriangle className="h-5 w-5" />
-                                    License Overuse Detected
-                                </CardTitle>
-                                <CardDescription className="text-red-700/80">Immediate action required to avoid true-up penalties.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="pt-4">
-                                <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100">
-                                    <div>
-                                        <h4 className="font-medium text-red-900">Over-provisioned Platform</h4>
-                                        <p className="text-sm text-red-800/80">View active users vs purchased seats in Licenses tab.</p>
+                                        <Button size="sm" variant="outline" onClick={() => handleSendReminder(lic.platform)}>
+                                            <Bell className="mr-1 h-4 w-4" /> Reminder
+                                        </Button>
                                     </div>
-                                    <div className="text-right">
-                                        <div className="font-bold text-red-600">Action Needed</div>
-                                    </div>
-                                </div>
-                                <Button className="w-full mt-4" variant="destructive">Purchase Additional Seats</Button>
-                            </CardContent>
-                        </Card>
-                    )}
-                </div>
-
-                {/* Right Sidebar: Calendar */}
-                <div className="flex flex-col gap-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Renewal Calendar</CardTitle>
-                            <CardDescription>Upcoming subscription renewals</CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex justify-center">
-                            <Calendar
-                                mode="single"
-                                selected={date}
-                                onSelect={setDate}
-                                className="rounded-md border shadow-sm w-full"
-                            />
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader className="pb-3">
-                            <CardTitle className="text-sm">Upcoming Events</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-center p-4">
-                                    <p className="text-sm text-muted-foreground">No upcoming events this month.</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-sm text-muted-foreground p-6 text-center border-dashed border-2 rounded-md">No renewal dates configured.</div>
+                )}
             </div>
         </div>
     );

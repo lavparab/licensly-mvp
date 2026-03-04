@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './components/theme-provider';
+import { Toaster } from 'sonner';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 import { Login } from './pages/Login';
@@ -17,6 +18,7 @@ import { Onboarding } from './pages/Onboarding';
 function App() {
   return (
     <ThemeProvider defaultTheme="system" storageKey="licensly-ui-theme">
+      <Toaster richColors position="top-right" />
       <AuthProvider>
         <BrowserRouter>
           <Routes>

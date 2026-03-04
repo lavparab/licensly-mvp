@@ -1,181 +1,253 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '../components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
-import { UserPlus, Shield, Key, Loader2 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { Building2, CreditCard, Shield, Users, Save, Loader2, Moon, Sun, Monitor } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
+import { toast } from 'sonner';
+import { useTheme } from '../components/theme-provider';
 
 export const Settings = () => {
     const { user } = useAuth();
-    const [organization, setOrganization] = useState<any>(null);
-    const [team, setTeam] = useState<any[]>([]);
+    const { theme, setTheme } = useTheme();
     const [isLoading, setIsLoading] = useState(true);
+    const [isSavingOrg, setIsSavingOrg] = useState(false);
+    const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+    // Form states
+    const [orgData, setOrgData] = useState({ id: '', name: '', domain: '', plan: '' });
+    const [profileData, setProfileData] = useState({ id: '', email: '', role: '', avatar_url: '' });
+
+    // Avatar preview state
+    const [avatarInput, setAvatarInput] = useState('');
 
     useEffect(() => {
-        if (user?.id) {
-            fetchSettingsData();
-        }
+        if (user) fetchSettingsData();
     }, [user]);
 
     const fetchSettingsData = async () => {
-        if (!user) return;
-
         try {
-            // 1. Fetch current user's profile to get org_id
-            const { data: profileData, error: profileError } = await supabase
+            const { data: profile } = await supabase
                 .from('users')
-                .select('org_id')
-                .eq('id', user.id)
+                .select('*, organizations(*)')
+                .eq('id', user?.id)
                 .single();
 
-            if (profileError || !profileData?.org_id) return;
-            const orgId = profileData.org_id;
+            if (profile) {
+                setProfileData({
+                    id: profile.id,
+                    email: profile.email,
+                    role: profile.role,
+                    avatar_url: profile.avatar_url || ''
+                });
+                setAvatarInput(profile.avatar_url || '');
 
-            // 2. Fetch Organization Data
-            const { data: orgData, error: orgError } = await supabase
-                .from('organizations')
-                .select('*')
-                .eq('id', orgId)
-                .single();
-
-            if (!orgError && orgData) {
-                setOrganization(orgData);
-            }
-
-            // 3. Fetch Team Data
-            const { data: teamData, error: teamError } = await supabase
-                .from('users')
-                .select('*')
-                .eq('org_id', orgId)
-                .order('created_at', { ascending: true });
-
-            if (!teamError && teamData) {
-                setTeam(teamData);
+                if (profile.organizations) {
+                    setOrgData({
+                        id: profile.organizations.id,
+                        name: profile.organizations.name,
+                        domain: profile.organizations.domain || '',
+                        plan: profile.organizations.plan
+                    });
+                }
             }
         } catch (error) {
             console.error('Error fetching settings:', error);
+            toast.error('Failed to load settings');
         } finally {
             setIsLoading(false);
         }
     };
 
-    if (isLoading) {
-        return (
-            <div className="flex justify-center items-center h-[60vh]">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-        );
-    }
+    const handleSaveOrganization = async () => {
+        setIsSavingOrg(true);
+        try {
+            await supabase
+                .from('organizations')
+                .update({ name: orgData.name, domain: orgData.domain })
+                .eq('id', orgData.id);
+            toast.success('Organization settings saved');
+        } catch (error) {
+            toast.error('Failed to save organization settings');
+        }
+        setIsSavingOrg(false);
+    };
+
+    const handleSaveProfile = async () => {
+        setIsSavingProfile(true);
+        try {
+            await supabase
+                .from('users')
+                .update({ avatar_url: avatarInput })
+                .eq('id', profileData.id);
+            setProfileData(prev => ({ ...prev, avatar_url: avatarInput }));
+            toast.success('Profile settings saved');
+        } catch (error) {
+            toast.error('Failed to save profile settings');
+        }
+        setIsSavingProfile(false);
+    };
+
+    if (isLoading) return <div className="flex h-[80vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+
+    const getInitials = (email: string) => {
+        return email ? email.substring(0, 2).toUpperCase() : 'US';
+    };
 
     return (
-        <div className="flex flex-col gap-6 max-w-5xl">
+        <div className="flex flex-col gap-6 max-w-4xl">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">Organization Settings</h1>
-                <p className="text-muted-foreground">Manage your workspace, team members, and security preferences.</p>
+                <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+                <p className="text-muted-foreground">Manage your account settings and organization preferences.</p>
             </div>
 
             <div className="grid gap-6">
-
-                {/* Profile / Org Details */}
+                {/* Organization Settings */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Organization Info</CardTitle>
-                        <CardDescription>Update your company's primary details.</CardDescription>
+                        <div className="flex items-center gap-2">
+                            <Building2 className="h-5 w-5 text-muted-foreground" />
+                            <CardTitle>Organization</CardTitle>
+                        </div>
+                        <CardDescription>Update your company's details.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="grid md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Company Name</label>
-                                <Input defaultValue={organization?.name || ''} />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Primary Domain</label>
-                                <Input defaultValue={organization?.domain || ''} disabled />
-                            </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Company Name</label>
+                            <Input
+                                value={orgData.name}
+                                onChange={(e) => setOrgData({ ...orgData, name: e.target.value })}
+                            />
                         </div>
-                        <div className="grid md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Industry</label>
-                                <Input defaultValue={organization?.industry || ''} />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Company Size</label>
-                                <Input defaultValue={organization?.company_size || ''} />
-                            </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Primary Domain</label>
+                            <Input
+                                value={orgData.domain}
+                                onChange={(e) => setOrgData({ ...orgData, domain: e.target.value })}
+                                placeholder="example.com"
+                            />
+                        </div>
+                        <div className="pt-2">
+                            <label className="text-sm font-medium block mb-2">Current Plan</label>
+                            <Badge variant="secondary" className="uppercase">{orgData.plan}</Badge>
                         </div>
                     </CardContent>
-                    <CardFooter className="border-t pt-4 flex justify-end">
-                        <Button>Save Changes</Button>
+                    <CardFooter className="border-t px-6 py-4">
+                        <Button onClick={handleSaveOrganization} disabled={isSavingOrg}>
+                            {isSavingOrg ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                            Save Organization
+                        </Button>
                     </CardFooter>
                 </Card>
 
-                {/* Team Management */}
+                {/* Profile Settings */}
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <div>
-                            <CardTitle>Team Members</CardTitle>
-                            <CardDescription>Manage who has access to the Licensly dashboard.</CardDescription>
+                    <CardHeader>
+                        <div className="flex items-center gap-2">
+                            <Users className="h-5 w-5 text-muted-foreground" />
+                            <CardTitle>Personal Profile</CardTitle>
                         </div>
-                        <Button size="sm">
-                            <UserPlus className="mr-2 h-4 w-4" />
-                            Invite Member
+                        <CardDescription>Manage your personal information and preferences.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <div className="flex items-center gap-6">
+                            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-muted text-2xl font-semibold overflow-hidden border">
+                                {avatarInput ? (
+                                    <img src={avatarInput} alt="Avatar" className="h-full w-full object-cover" />
+                                ) : (
+                                    getInitials(profileData.email)
+                                )}
+                            </div>
+                            <div className="space-y-2 flex-1 max-w-sm">
+                                <label className="text-sm font-medium">Avatar URL</label>
+                                <Input
+                                    value={avatarInput}
+                                    onChange={(e) => setAvatarInput(e.target.value)}
+                                    placeholder="https://example.com/avatar.png"
+                                />
+                                <p className="text-xs text-muted-foreground">Provide a URL for your profile picture.</p>
+                            </div>
+                        </div>
+
+                        <div className="grid gap-4 md:grid-cols-2">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Email Address</label>
+                                <Input value={profileData.email} disabled className="bg-muted cursor-not-allowed" />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Role</label>
+                                <div className="h-10 px-3 py-2 border rounded-md bg-muted text-sm text-muted-foreground capitalize flex items-center">
+                                    {profileData.role === 'admin' && <Shield className="h-4 w-4 mr-2" />}
+                                    {profileData.role}
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                    <CardFooter className="border-t px-6 py-4">
+                        <Button onClick={handleSaveProfile} disabled={isSavingProfile}>
+                            {isSavingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                            Save Profile
                         </Button>
+                    </CardFooter>
+                </Card>
+
+                {/* Preferences */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>App Preferences</CardTitle>
+                        <CardDescription>Customize how Licensly looks and feels.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="rounded-md border">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>User</TableHead>
-                                        <TableHead>Role</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {team.map((member) => (
-                                        <TableRow key={member.id}>
-                                            <TableCell>
-                                                <div className="font-medium">{member.full_name || 'Unnamed User'}</div>
-                                                <div className="text-xs text-muted-foreground">{member.email}</div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant={member.role === 'admin' ? 'default' : 'secondary'} className="capitalize">
-                                                    {member.role || 'user'}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell>
-                                                {member.onboarding_completed ? (
-                                                    <div className="flex items-center text-xs text-green-600">
-                                                        <Shield className="mr-1 h-3 w-3" /> Active
-                                                    </div>
-                                                ) : (
-                                                    <div className="flex items-center text-xs text-yellow-600">
-                                                        <Key className="mr-1 h-3 w-3" /> Pending Onboarding
-                                                    </div>
-                                                )}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <Button variant="ghost" size="sm" className="text-muted-foreground">Edit</Button>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                    {team.length === 0 && (
-                                        <TableRow>
-                                            <TableCell colSpan={4} className="h-24 text-center">
-                                                No team members found.
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium block mb-2">Theme</label>
+                            <div className="flex flex-wrap gap-2">
+                                <Button
+                                    variant={theme === 'light' ? 'default' : 'outline'}
+                                    onClick={() => setTheme('light')}
+                                    className="w-32"
+                                >
+                                    <Sun className="mr-2 h-4 w-4" /> Light
+                                </Button>
+                                <Button
+                                    variant={theme === 'dark' ? 'default' : 'outline'}
+                                    onClick={() => setTheme('dark')}
+                                    className="w-32"
+                                >
+                                    <Moon className="mr-2 h-4 w-4" /> Dark
+                                </Button>
+                                <Button
+                                    variant={theme === 'system' ? 'default' : 'outline'}
+                                    onClick={() => setTheme('system')}
+                                    className="w-32"
+                                >
+                                    <Monitor className="mr-2 h-4 w-4" /> System
+                                </Button>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
 
+                {/* Billing (Disabled for MVP) */}
+                <Card className="opacity-60 cursor-not-allowed">
+                    <CardHeader>
+                        <div className="flex items-center gap-2">
+                            <CreditCard className="h-5 w-5 text-muted-foreground" />
+                            <CardTitle>Billing & Subscription</CardTitle>
+                        </div>
+                        <CardDescription>Manage your Licensly payment methods (Coming soon).</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex items-center justify-between border rounded-lg p-4">
+                            <div>
+                                <p className="font-medium">Enterprise Plan</p>
+                                <p className="text-sm text-muted-foreground">Billed annually</p>
+                            </div>
+                            <Button disabled variant="outline">Manage Billing</Button>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );
