@@ -12,6 +12,7 @@ import { Compliance } from './pages/Compliance';
 import { Reports } from './pages/Reports';
 import { Settings } from './pages/Settings';
 import AuthCallback from './pages/AuthCallback';
+import { Onboarding } from './pages/Onboarding';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             <Route path="/auth/callback" element={<AuthCallback />} />
             {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>
+              <Route path="/onboarding" element={<Onboarding />} />
               <Route element={<DashboardLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/licenses" element={<Licenses />} />

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { Check, X, TrendingDown, Trash2, GitMerge, DollarSign } from 'lucide-react';
+import { Check, X, TrendingDown, Trash2, GitMerge, DollarSign, Loader2 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 type RecommendationType = 'downgrade' | 'remove' | 'consolidate';
 
@@ -15,22 +16,55 @@ interface Recommendation {
     platform: string;
 }
 
-const MOCK_RECOMMENDATIONS: Recommendation[] = [
-    { id: '1', type: 'downgrade', platform: 'Adobe CC', title: 'Downgrade 12 Enterprise Licenses', description: '12 users have only used Photoshop & Illustrator in the last 90 days. Downgrade to Single App plans.', savings: 2400 },
-    { id: '2', type: 'remove', platform: 'GitHub', title: 'Remove 8 Unused GitHub Seats', description: '8 developers have not pushed code or logged in for over 60 days.', savings: 152 },
-    { id: '3', type: 'consolidate', platform: 'Multiple', title: 'Consolidate Communication Tools', description: '45 users have active licenses for both Slack and Microsoft Teams. Standardizing on one platform could save costs.', savings: 675 },
-    { id: '4', type: 'downgrade', platform: 'Zoom', title: 'Downgrade 20 Pro Licenses to Basic', description: '20 users have not hosted meetings longer than 40 minutes in the past month.', savings: 300 },
-];
-
 export const Optimization = () => {
-    const [recommendations, setRecommendations] = useState(MOCK_RECOMMENDATIONS);
+    const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        fetchRecommendations();
+    }, []);
+
+    const fetchRecommendations = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('optimization_recommendations')
+                .select('*, licenses(platform)')
+                .eq('status', 'open');
+
+            if (!error && data) {
+                const mapped = data.map((rec: any) => ({
+                    id: rec.id,
+                    type: rec.recommendation_type,
+                    title: rec.title,
+                    description: rec.description,
+                    savings: Number(rec.potential_savings),
+                    platform: rec.licenses?.platform || 'Unknown Platform'
+                }));
+                setRecommendations(mapped);
+            }
+        } catch (error) {
+            console.error('Error fetching recommendations:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const totalSavings = recommendations.reduce((acc, curr) => acc + curr.savings, 0);
 
-    const handleAction = (id: string, action: 'accept' | 'dismiss') => {
-        // In prod: call API to accept/dismiss, then remove from UI
-        console.log(`${action} recommendation ${id}`);
+    const handleAction = async (id: string, action: 'accept' | 'dismiss') => {
+        // Optimistic UI update
         setRecommendations(recommendations.filter(r => r.id !== id));
+
+        try {
+            await supabase
+                .from('optimization_recommendations')
+                .update({ status: action === 'accept' ? 'applied' : 'dismissed' })
+                .eq('id', id);
+        } catch (error) {
+            console.error(`Error updating recommendation ${id}:`, error);
+            // Revert on failure
+            fetchRecommendations();
+        }
     };
 
     const getIcon = (type: RecommendationType) => {
@@ -38,6 +72,7 @@ export const Optimization = () => {
             case 'downgrade': return <TrendingDown className="h-5 w-5 text-blue-500" />;
             case 'remove': return <Trash2 className="h-5 w-5 text-red-500" />;
             case 'consolidate': return <GitMerge className="h-5 w-5 text-purple-500" />;
+            default: return <TrendingDown className="h-5 w-5 text-blue-500" />;
         }
     };
 
@@ -72,7 +107,11 @@ export const Optimization = () => {
             </div>
 
             <div className="grid gap-4">
-                {recommendations.length > 0 ? (
+                {isLoading ? (
+                    <div className="flex justify-center items-center h-48">
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    </div>
+                ) : recommendations.length > 0 ? (
                     recommendations.map((rec) => (
                         <Card key={rec.id}>
                             <div className="flex flex-col md:flex-row md:items-center">
@@ -115,7 +154,7 @@ export const Optimization = () => {
                         </div>
                         <h3 className="text-lg font-medium">All optimized!</h3>
                         <p className="text-muted-foreground max-w-sm mt-2">
-                            There are no more savings recommendations right now. Check back later after the next sync.
+                            There are no more savings recommendations right now. Connect more integrations or check back later after the next sync.
                         </p>
                     </div>
                 )}

@@ -6,6 +6,7 @@ interface AuthContextType {
     user: User | null;
     session: Session | null;
     isLoading: boolean;
+    onboardingCompleted: boolean | null;
     signOut: () => Promise<void>;
 }
 
@@ -15,20 +16,46 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [session, setSession] = useState<Session | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [onboardingCompleted, setOnboardingCompleted] = useState<boolean | null>(null);
+
+    const checkOnboarding = async (userId: string) => {
+        try {
+            const { data, error } = await supabase
+                .from('users')
+                .select('onboarding_completed')
+                .eq('id', userId)
+                .single();
+
+            if (!error && data) {
+                setOnboardingCompleted(data.onboarding_completed);
+            }
+        } catch (err) {
+            console.error('Failed to fetch onboarding status', err);
+        }
+    };
 
     useEffect(() => {
         // Get active session
         supabase.auth.getSession().then(({ data: { session } }) => {
             setSession(session);
             setUser(session?.user ?? null);
-            setIsLoading(false);
+            if (session?.user) {
+                checkOnboarding(session.user.id).finally(() => setIsLoading(false));
+            } else {
+                setIsLoading(false);
+            }
         });
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             setSession(session);
             setUser(session?.user ?? null);
-            setIsLoading(false);
+            if (session?.user) {
+                checkOnboarding(session.user.id).finally(() => setIsLoading(false));
+            } else {
+                setOnboardingCompleted(null);
+                setIsLoading(false);
+            }
         });
 
         return () => subscription.unsubscribe();
@@ -39,7 +66,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, session, isLoading, signOut }}>
+        <AuthContext.Provider value={{ user, session, isLoading, onboardingCompleted, signOut }}>
             {children}
         </AuthContext.Provider>
     );

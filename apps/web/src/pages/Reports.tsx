@@ -1,17 +1,43 @@
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Input } from '../components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
-import { FileText, Download, Target, Printer } from 'lucide-react';
-
-const MOCK_REPORTS = [
-    { id: '1', name: 'Q2 2026 License Utilization', type: 'Utilization', format: 'PDF', date: '2026-07-01', size: '2.4 MB' },
-    { id: '2', name: 'August Cost Savings Opportunities', type: 'Optimization', format: 'Excel', date: '2026-08-01', size: '1.1 MB' },
-    { id: '3', name: 'Compliance & Audit Log Report', type: 'Compliance', format: 'PDF', date: '2026-08-15', size: '4.5 MB' },
-];
+import { FileText, Download, Target, Printer, Loader2 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { format } from 'date-fns';
 
 export const Reports = () => {
+    const [reports, setReports] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchReports = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('reports')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (!error && data) {
+                    setReports(data);
+                }
+            } catch (error) {
+                console.error('Error fetching reports:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchReports();
+    }, []);
+
+    const handleGenerate = () => {
+        // Mock generation
+        console.log('Generating report...');
+    };
+
     return (
         <div className="flex flex-col gap-6">
             <div>
@@ -66,7 +92,7 @@ export const Reports = () => {
                         </div>
                     </CardContent>
                     <CardFooter>
-                        <Button className="w-full">
+                        <Button className="w-full" onClick={handleGenerate}>
                             <FileText className="mr-2 h-4 w-4" />
                             Generate Report
                         </Button>
@@ -80,36 +106,52 @@ export const Reports = () => {
                         <CardDescription>Recently generated reports available for download.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Report Name</TableHead>
-                                    <TableHead>Type</TableHead>
-                                    <TableHead>Date Generated</TableHead>
-                                    <TableHead className="text-right">Action</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {MOCK_REPORTS.map((report) => (
-                                    <TableRow key={report.id}>
-                                        <TableCell className="font-medium">
-                                            <div className="flex items-center gap-2">
-                                                {report.format === 'PDF' ? <Printer className="h-4 w-4 text-blue-500" /> : <Target className="h-4 w-4 text-green-500" />}
-                                                {report.name}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>{report.type}</TableCell>
-                                        <TableCell className="text-muted-foreground">{report.date}</TableCell>
-                                        <TableCell className="text-right">
-                                            <Button variant="ghost" size="sm" className="h-8">
-                                                <Download className="mr-2 h-4 w-4" />
-                                                {report.size}
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                        {isLoading ? (
+                            <div className="flex justify-center items-center h-48">
+                                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                            </div>
+                        ) : reports.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-12 text-center text-sm text-muted-foreground border-dashed border-2 rounded-lg">
+                                <FileText className="h-8 w-8 mb-2 opacity-50" />
+                                <p>No reports generated yet.</p>
+                                <p>Use the form on the left to generate your first report.</p>
+                            </div>
+                        ) : (
+                            <div className="rounded-md border">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Report Name</TableHead>
+                                            <TableHead>Type</TableHead>
+                                            <TableHead>Date Generated</TableHead>
+                                            <TableHead className="text-right">Action</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {reports.map((report) => (
+                                            <TableRow key={report.id}>
+                                                <TableCell className="font-medium">
+                                                    <div className="flex items-center gap-2">
+                                                        {report.format?.toUpperCase() === 'PDF' ? <Printer className="h-4 w-4 text-blue-500" /> : <Target className="h-4 w-4 text-green-500" />}
+                                                        {report.name}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="capitalize">{report.report_type.replace('_', ' ')}</TableCell>
+                                                <TableCell className="text-muted-foreground">
+                                                    {format(new Date(report.created_at), 'yyyy-MM-dd')}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button variant="ghost" size="sm" className="h-8" onClick={() => window.open(report.file_url, '_blank')}>
+                                                        <Download className="mr-2 h-4 w-4" />
+                                                        Download
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 
