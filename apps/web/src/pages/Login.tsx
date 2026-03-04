@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Alert, AlertDescription } from '../components/ui/alert';
@@ -8,12 +9,20 @@ import { Alert, AlertDescription } from '../components/ui/alert';
 export const Login = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { session, isLoading: authLoading } = useAuth();
     const [email, setEmail] = useState('admin@acmecorp.com'); // Default for demo
     const [password, setPassword] = useState('password123'); // Default for demo
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
     const from = location.state?.from?.pathname || '/dashboard';
+
+    // Redirect already-authenticated users to dashboard
+    useEffect(() => {
+        if (!authLoading && session) {
+            navigate(from, { replace: true });
+        }
+    }, [session, authLoading, navigate, from]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -37,7 +46,7 @@ export const Login = () => {
         const { error } = await supabase.auth.signInWithOAuth({
             provider,
             options: {
-                redirectTo: `${window.location.origin}/dashboard`,
+                redirectTo: `${window.location.origin}/auth/callback`,
             },
         });
 
