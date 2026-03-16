@@ -15,6 +15,17 @@ async function getAuthToken(): Promise<string | null> {
  */
 async function authHeaders(): Promise<HeadersInit> {
     const token = await getAuthToken();
+    async function authHeaders(): Promise<HeadersInit> {
+        const token = await getAuthToken();
+        console.log('Auth token:', token ? 'EXISTS' : 'NULL'); // add this line
+        const headers: HeadersInit = {
+            'Content-Type': 'application/json',
+        };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        return headers;
+    }
     const headers: HeadersInit = {
         'Content-Type': 'application/json',
     };
@@ -93,17 +104,17 @@ export const api = {
             headers,
             body: body ? JSON.stringify(body) : undefined,
         });
-        
+
         if (response.status === 401) {
             window.location.href = '/login';
             throw new Error('Unauthorized');
         }
-        
+
         if (!response.ok) {
             const errBody = await response.json().catch(() => ({ error: 'Unknown error' }));
             throw new Error(errBody.error || `API Error: ${response.status}`);
         }
-        
+
         return response.blob();
     },
 };
