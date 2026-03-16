@@ -8,7 +8,7 @@ import {
 import { AlertCircle, CreditCard, Users, Tag, Loader2, RotateCw, Download } from 'lucide-react';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { formatDistanceToNow, addDays, isBefore } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -37,59 +37,34 @@ export const Dashboard = () => {
     const fetchDashboardData = async () => {
         setIsLoading(true);
         try {
-            const { data: licensesData } = await supabase.from('licenses').select('*');
-            const { data: savingsData } = await supabase.from('optimization_recommendations')
-                .select('estimated_savings')
-                .eq('status', 'pending');
-            const { data: alertsData } = await supabase.from('compliance_alerts')
-                .select('*')
-                .eq('is_resolved', false)
-                .order('created_at', { ascending: false })
-                .limit(5);
+            const data = await api.get('/api/dashboard/stats');
 
-            let spend = 0, active = 0, total = 0;
-            const spendMap: Record<string, number> = {};
-            const upcomingRenewals: any[] = [];
-
-            if (licensesData) {
-                setLicensesRaw(licensesData);
-                const now = new Date();
-                const thirtyDays = addDays(now, 30);
-                licensesData.forEach((lic: any) => {
-                    const cost = Number(lic.cost_per_seat) * lic.seats_purchased;
-                    spend += cost;
-                    active += lic.seats_used;
-                    total += lic.seats_purchased;
-                    spendMap[lic.platform] = (spendMap[lic.platform] || 0) + cost;
-                    if (lic.renewal_date) {
-                        const rd = new Date(lic.renewal_date);
-                        if (isBefore(rd, thirtyDays) && !isBefore(rd, now)) upcomingRenewals.push(lic);
-                    }
-                });
-            }
-
-            const platformData = Object.entries(spendMap)
-                .map(([name, val]) => ({ name, spend: val }))
-                .sort((a, b) => b.spend - a.spend)
-                .slice(0, 5);
-
-            const totalSavings = (savingsData || []).reduce((acc, c) => acc + Number(c.estimated_savings), 0);
-            let crit = 0, warn = 0;
-            (alertsData || []).forEach((a: any) => {
-                if (a.severity === 'critical') crit++;
-                if (a.severity === 'warning') warn++;
+            setStats({
+                totalSpend: data.total_monthly_spend || 0,
+                savings: data.potential_savings || 0,
+                activeSeats: data.seats_used || 0,
+                totalSeats: data.seats_purchased || 0,
+                criticalAlerts: data.active_alerts?.filter((a: any) => a.severity === 'critical').length || 0,
+                warningAlerts: data.active_alerts?.filter((a: any) => a.severity === 'warning').length || 0
             });
 
-            setStats({ totalSpend: spend, savings: totalSavings, activeSeats: active, totalSeats: total, criticalAlerts: crit, warningAlerts: warn });
-            setPlatformSpend(platformData);
+            setPlatformSpend((data.top_platforms || []).map((p: any) => ({ name: p.platform, spend: Number(p.spend) })));
+
             setUtilizationData([
-                { name: 'Used', value: active, color: 'hsl(var(--chart-1))' },
-                { name: 'Available', value: Math.max(total - active, 0), color: 'hsl(var(--chart-3))' }
+                { name: 'Used', value: data.seats_used || 0, color: 'hsl(var(--chart-1))' },
+                { name: 'Available', value: Math.max((data.seats_purchased || 0) - (data.seats_used || 0), 0), color: 'hsl(var(--chart-3))' }
             ]);
-            setAlerts(alertsData || []);
-            setRenewals(upcomingRenewals.sort((a, b) => new Date(a.renewal_date).getTime() - new Date(b.renewal_date).getTime()));
+
+            setAlerts((data.active_alerts || []).slice(0, 5));
+
+            const upcomingRenewals = data.upcoming_renewals || [];
+            setRenewals(upcomingRenewals.sort((a: any, b: any) => new Date(a.renewal_date).getTime() - new Date(b.renewal_date).getTime()));
+
+            const licensesRes = await api.get('/api/licenses?limit=100');
+            setLicensesRaw(licensesRes.licenses || []);
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
+            toast.error('Failed to load dashboard data');
         } finally {
             setIsLoading(false);
         }

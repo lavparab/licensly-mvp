@@ -4,7 +4,7 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Unplug, CheckCircle2, RotateCw, AlertCircle, Loader2, Link2Off, Plug } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -32,8 +32,8 @@ export const Integrations = () => {
 
     const fetchIntegrations = async () => {
         try {
-            const { data, error } = await supabase.from('integrations').select('*').order('created_at', { ascending: false });
-            if (!error && data) setIntegrations(data);
+            const data = await api.get('/api/integrations');
+            if (data && data.integrations) setIntegrations(data.integrations);
         } catch (error) { console.error('Error fetching integrations:', error); }
         finally { setIsLoading(false); }
     };
@@ -55,15 +55,7 @@ export const Integrations = () => {
         setConnectProgress(100);
 
         try {
-            const { data: profile } = await supabase.from('users').select('org_id').eq('id', (await supabase.auth.getUser()).data.user?.id).single();
-            if (profile?.org_id) {
-                await supabase.from('integrations').upsert(
-                    { org_id: profile.org_id, platform, status: 'connected', last_synced_at: new Date().toISOString() },
-                    { onConflict: 'org_id,platform' }
-                );
-            }
-            await fetchIntegrations();
-            toast.success(`${platform} connected successfully!`);
+            window.location.href = `/api/integrations/${platform}/auth`;
         } catch (err) {
             toast.error(`Failed to connect ${platform}`);
         }
@@ -73,7 +65,7 @@ export const Integrations = () => {
     const handleDisconnect = async () => {
         if (!disconnectTarget) return;
         try {
-            await supabase.from('integrations').update({ status: 'disconnected' }).eq('id', disconnectTarget.id);
+            await api.delete(`/api/integrations/${disconnectTarget.id}`);
             await fetchIntegrations();
             toast.success(`${disconnectTarget.platform} disconnected.`);
         } catch (err) {
@@ -86,7 +78,7 @@ export const Integrations = () => {
         setSyncingId(integration.id);
         await new Promise(r => setTimeout(r, 2000));
         try {
-            await supabase.from('integrations').update({ last_synced_at: new Date().toISOString() }).eq('id', integration.id);
+            await api.post(`/api/integrations/${integration.id}/sync`);
             await fetchIntegrations();
             toast.success(`${integration.platform} synced!`);
         } catch (err) {

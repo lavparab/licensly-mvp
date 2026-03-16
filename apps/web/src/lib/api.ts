@@ -85,4 +85,25 @@ export const api = {
         });
         return handleResponse<T>(response);
     },
+
+    async download(path: string, body?: any): Promise<Blob> {
+        const headers = await authHeaders();
+        const response = await fetch(`${API_URL}${path}`, {
+            method: 'POST',
+            headers,
+            body: body ? JSON.stringify(body) : undefined,
+        });
+        
+        if (response.status === 401) {
+            window.location.href = '/login';
+            throw new Error('Unauthorized');
+        }
+        
+        if (!response.ok) {
+            const errBody = await response.json().catch(() => ({ error: 'Unknown error' }));
+            throw new Error(errBody.error || `API Error: ${response.status}`);
+        }
+        
+        return response.blob();
+    },
 };

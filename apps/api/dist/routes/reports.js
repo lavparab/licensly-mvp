@@ -6,7 +6,22 @@ const reports_1 = require("../services/reports");
 const validate_1 = require("../middleware/validate");
 const errorHandler_1 = require("../middleware/errorHandler");
 const schemas_1 = require("../types/schemas");
+const supabase_1 = require("../utils/supabase");
 const router = (0, express_1.Router)();
+// List all generated reports for the organization
+router.get('/', auth_1.requireAuth, (0, errorHandler_1.asyncHandler)(async (req, res) => {
+    const orgId = req.orgId;
+    if (!orgId)
+        throw new Error("Unauthorized");
+    const { data: reports, error } = await supabase_1.supabase
+        .from('reports')
+        .select('*')
+        .eq('org_id', orgId)
+        .order('created_at', { ascending: false });
+    if (error)
+        throw error;
+    res.json({ reports });
+}));
 // Generate and Download Report
 router.post('/generate', auth_1.requireAuth, (0, validate_1.validate)(schemas_1.generateReportSchema), (0, errorHandler_1.asyncHandler)(async (req, res) => {
     const { type, format } = req.body;

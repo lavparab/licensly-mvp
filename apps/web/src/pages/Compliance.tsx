@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { AlertCircle, ShieldCheck, Calendar, Bell, CheckCircle2, Loader2 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { format, formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -17,29 +17,30 @@ export const Compliance = () => {
 
     const fetchData = async () => {
         try {
-            const { data: alertsData } = await supabase
-                .from('compliance_alerts')
-                .select('*, licenses(platform, plan_name)')
-                .eq('is_resolved', false)
-                .order('created_at', { ascending: false });
+            // Fetch alerts via backend API
+            const alertsResponse = await api.get('/api/compliance/alerts?is_resolved=false&limit=50');
+            // Fetch licenses with renewal dates via backend API
+            const licensesResponse = await api.get('/api/licenses?limit=10');
 
-            const { data: licensesData } = await supabase
-                .from('licenses')
-                .select('*')
-                .not('renewal_date', 'is', null)
-                .order('renewal_date', { ascending: true })
-                .limit(10);
-
-            if (alertsData) setAlerts(alertsData);
-            if (licensesData) setRenewals(licensesData);
-        } catch (err) { console.error('Error:', err); }
+            if (alertsResponse.alerts) setAlerts(alertsResponse.alerts);
+            if (licensesResponse.licenses) {
+                // Filter to only those with renewal dates and sort
+                const withRenewals = licensesResponse.licenses
+                    .filter((l: any) => l.renewal_date)
+                    .sort((a: any, b: any) => new Date(a.renewal_date).getTime() - new Date(b.renewal_date).getTime());
+                setRenewals(withRenewals);
+            }
+        } catch (err) {
+            console.error('Error fetching compliance data:', err);
+            toast.error('Failed to load compliance data');
+        }
         finally { setIsLoading(false); }
     };
 
     const handleResolve = async (id: string) => {
         setActionId(id);
         try {
-            await supabase.from('compliance_alerts').update({ is_resolved: true }).eq('id', id);
+            await api.patch(`/api/compliance/alerts/${id}/resolve`);
             setAlerts(prev => prev.filter(a => a.id !== id));
             toast.success('Alert resolved!');
         } catch (err) {

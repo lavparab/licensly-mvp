@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -108,60 +108,13 @@ export const Onboarding = () => {
         setIsSubmitting(true);
 
         try {
-            // 1. Get org_id
-            const { data: profile } = await supabase
-                .from('users')
-                .select('org_id')
-                .eq('id', user.id)
-                .single();
-
-            if (!profile?.org_id) throw new Error('No org found');
-            const orgId = profile.org_id;
-
-            // 2. Update organization
-            await supabase
-                .from('organizations')
-                .update({ name: companyName, industry, company_size: companySize })
-                .eq('id', orgId);
-
-            // 3. Upsert integrations
-            for (const platform of selectedPlatforms) {
-                await supabase
-                    .from('integrations')
-                    .upsert(
-                        { org_id: orgId, platform, status: 'connected', last_synced_at: new Date().toISOString() },
-                        { onConflict: 'org_id,platform' }
-                    );
-            }
-
-            // 4. Insert licenses per integration
-            for (const lic of licenseInputs) {
-                // Get integration id
-                const { data: intData } = await supabase
-                    .from('integrations')
-                    .select('id')
-                    .eq('org_id', orgId)
-                    .eq('platform', lic.platform)
-                    .single();
-
-                await supabase.from('licenses').insert({
-                    org_id: orgId,
-                    integration_id: intData?.id || null,
-                    platform: lic.platform,
-                    plan_name: 'Standard',
-                    seats_purchased: lic.seats,
-                    seats_used: 0,
-                    cost_per_seat: lic.costPerSeat,
-                    billing_cycle: 'monthly',
-                    renewal_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                });
-            }
-
-            // 5. Mark onboarding complete
-            await supabase
-                .from('users')
-                .update({ onboarding_completed: true })
-                .eq('id', user.id);
+            await api.post('/api/onboarding/complete', {
+                company_size: companySize,
+                industry: industry,
+                org_name: companyName,
+                platforms: selectedPlatforms,
+                licenses: licenseInputs
+            });
 
             toast.success('Onboarding complete! Welcome to Licensly.');
             navigate('/dashboard');
@@ -383,7 +336,7 @@ export const Onboarding = () => {
                         <Badge variant="secondary">Step {step + 1} of {STEPS.length}</Badge>
                     </div>
                     <div className="flex gap-2">
-                        {STEPS.map((s, i) => (
+                        {STEPS.map((_s, i) => (
                             <div key={i} className="flex-1 flex items-center gap-2">
                                 <div className={`h-1.5 flex-1 rounded-full transition-all ${i <= step ? 'bg-primary' : 'bg-muted'
                                     }`} />
@@ -391,9 +344,9 @@ export const Onboarding = () => {
                         ))}
                     </div>
                     <div className="flex justify-between mt-2">
-                        {STEPS.map((s, i) => (
+                        {STEPS.map((stepItem, i) => (
                             <span key={i} className={`text-xs ${i <= step ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
-                                {s.title}
+                                {stepItem.title}
                             </span>
                         ))}
                     </div>

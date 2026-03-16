@@ -4,8 +4,24 @@ import { generateUtilizationPDF, generateRawDataExcel } from '../services/report
 import { validate } from '../middleware/validate';
 import { asyncHandler } from '../middleware/errorHandler';
 import { generateReportSchema } from '../types/schemas';
+import { supabase } from '../utils/supabase';
 
 const router = Router();
+
+// List all generated reports for the organization
+router.get('/', requireAuth, asyncHandler(async (req: AuthRequest, res) => {
+    const orgId = req.orgId;
+    if (!orgId) throw new Error("Unauthorized");
+
+    const { data: reports, error } = await supabase
+        .from('reports')
+        .select('*')
+        .eq('org_id', orgId)
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    res.json({ reports });
+}));
 
 // Generate and Download Report
 router.post('/generate', requireAuth, validate(generateReportSchema), asyncHandler(async (req: AuthRequest, res) => {

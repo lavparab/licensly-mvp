@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { FileText, Download, Plus, Loader2, BarChart3 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -23,35 +23,13 @@ export const Reports = () => {
 
     const fetchReports = async () => {
         try {
-            const { data } = await supabase.from('reports').select('*').order('created_at', { ascending: false });
-            if (data) setReports(data);
-        } catch (err) { console.error(err); }
+            const data = await api.get('/api/reports');
+            if (data && data.reports) setReports(data.reports);
+        } catch (err) { 
+            console.error(err); 
+            toast.error('Failed to load reports history');
+        }
         finally { setIsLoading(false); }
-    };
-
-    const generateCSVContent = async (type: string) => {
-        if (type === 'utilization') {
-            const { data } = await supabase.from('licenses').select('*');
-            if (!data || data.length === 0) return null;
-            const headers = ['Platform', 'Plan', 'Seats Purchased', 'Seats Used', 'Utilization %', 'Cost/Seat'];
-            const rows = data.map(l => [l.platform, l.plan_name, l.seats_purchased, l.seats_used, Math.round((l.seats_used / (l.seats_purchased || 1)) * 100), l.cost_per_seat]);
-            return [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-        }
-        if (type === 'optimization') {
-            const { data } = await supabase.from('optimization_recommendations').select('*, licenses(platform)');
-            if (!data || data.length === 0) return null;
-            const headers = ['Platform', 'Type', 'Estimated Savings', 'Status'];
-            const rows = data.map(r => [r.licenses?.platform || 'Unknown', r.type, r.estimated_savings, r.status]);
-            return [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-        }
-        if (type === 'compliance') {
-            const { data } = await supabase.from('compliance_alerts').select('*, licenses(platform)');
-            if (!data || data.length === 0) return null;
-            const headers = ['Platform', 'Alert Type', 'Severity', 'Message', 'Resolved', 'Due Date'];
-            const rows = data.map(a => [a.licenses?.platform || 'Unknown', a.alert_type, a.severity, `"${a.message}"`, a.is_resolved, a.due_date]);
-            return [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-        }
-        return null;
     };
 
     const handleGenerate = async (type: string) => {
@@ -59,37 +37,29 @@ export const Reports = () => {
         setProgress(0);
 
         const interval = setInterval(() => {
-            setProgress(prev => {
-                if (prev >= 90) { clearInterval(interval); return 90; }
-                return prev + 15;
-            });
+            setProgress(prev => Math.min(prev + 15, 90));
         }, 300);
 
-        const csv = await generateCSVContent(type);
-        clearInterval(interval);
-        setProgress(100);
+        try {
+            const blob = await api.download('/api/reports/generate', { type, format: 'csv' });
+            clearInterval(interval);
+            setProgress(100);
 
-        await new Promise(r => setTimeout(r, 500));
-
-        if (csv) {
-            // Save report record
-            try {
-                await supabase.from('reports').insert({
-                    org_id: (await supabase.from('users').select('org_id').eq('id', (await supabase.auth.getUser()).data.user?.id).single()).data?.org_id,
-                    type,
-                    file_url: `generated-${Date.now()}.csv`,
-                });
-                await fetchReports();
-            } catch (err) { console.error(err); }
+            await new Promise(r => setTimeout(r, 500));
 
             // Download
-            const blob = new Blob([csv], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = `${type}-report-${new Date().toISOString().split('T')[0]}.csv`; a.click();
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${type}-report-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
             URL.revokeObjectURL(url);
-            toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} report generated and downloaded!`);
-        } else {
-            toast.error('No data available for this report type');
+            
+            toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} report generated!`);
+            await fetchReports();
+        } catch (err: any) {
+            clearInterval(interval);
+            toast.error(err.message || 'Failed to generate report. No basic data available.');
         }
 
         setGenerating(null);
@@ -97,15 +67,17 @@ export const Reports = () => {
     };
 
     const handleDownload = async (report: any) => {
-        const csv = await generateCSVContent(report.type);
-        if (csv) {
-            const blob = new Blob([csv], { type: 'text/csv' });
+        try {
+            const blob = await api.download('/api/reports/generate', { type: report.type, format: 'csv' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = `${report.type}-report-${format(new Date(report.created_at), 'yyyy-MM-dd')}.csv`; a.click();
+            const a = document.createElement('a'); 
+            a.href = url; 
+            a.download = `${report.type}-report-${format(new Date(report.created_at), 'yyyy-MM-dd')}.csv`; 
+            a.click();
             URL.revokeObjectURL(url);
             toast.success('Report downloaded!');
-        } else {
-            toast.error('No data available for download');
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to download report');
         }
     };
 

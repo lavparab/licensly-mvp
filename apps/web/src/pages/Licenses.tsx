@@ -5,7 +5,7 @@ import { Button } from '../components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Badge } from '../components/ui/badge';
 import { Search, Download, Loader2, FileX, ArrowUpDown, Key } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
@@ -25,9 +25,13 @@ export const Licenses = () => {
 
     const fetchLicenses = async () => {
         try {
-            const { data, error } = await supabase.from('licenses').select('*').order('created_at', { ascending: false });
-            if (!error && data) setLicenses(data);
-        } catch (error) { console.error('Error:', error); }
+            const maxLimit = 1000; // Fetch enough for client-side filtering
+            const data = await api.get(`/api/licenses?limit=${maxLimit}`);
+            if (data && data.licenses) setLicenses(data.licenses);
+        } catch (error) { 
+            console.error('Error:', error); 
+            toast.error('Failed to load licenses');
+        }
         finally { setIsLoading(false); }
     };
 
