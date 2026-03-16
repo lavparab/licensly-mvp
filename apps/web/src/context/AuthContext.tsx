@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 
 interface AuthContextType {
     user: User | null;
@@ -18,17 +19,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [onboardingCompleted, setOnboardingCompleted] = useState<boolean | null>(null);
 
-    const checkOnboarding = async (userId: string) => {
+    const checkOnboarding = async () => {
         try {
-            const { data, error } = await supabase
-                .from('users')
-                .select('onboarding_completed')
-                .eq('id', userId)
-                .single();
-
-            if (!error && data) {
-                setOnboardingCompleted(data.onboarding_completed);
-            }
+            const data = await api.get('/api/onboarding/status');
+            setOnboardingCompleted(data.completed ?? false);
         } catch (err) {
             console.error('Failed to fetch onboarding status', err);
         }
@@ -40,7 +34,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setSession(session);
             setUser(session?.user ?? null);
             if (session?.user) {
-                checkOnboarding(session.user.id).finally(() => setIsLoading(false));
+                checkOnboarding().finally(() => setIsLoading(false));
             } else {
                 setIsLoading(false);
             }
@@ -51,7 +45,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setSession(session);
             setUser(session?.user ?? null);
             if (session?.user) {
-                checkOnboarding(session.user.id).finally(() => setIsLoading(false));
+                checkOnboarding().finally(() => setIsLoading(false));
             } else {
                 setOnboardingCompleted(null);
                 setIsLoading(false);
