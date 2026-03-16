@@ -4,6 +4,7 @@
     "module": "commonjs",
     "rootDir": "./src",
     "types": [
+      "node",
       "jest"
     ],
     "outDir": "./dist",

@@ -68,11 +68,13 @@ router.get('/:platform/callback', async (req, res) => {
         if (dbError)
             throw dbError;
         // Trigger initial sync here if necessary...
-        res.redirect(`http://localhost:5173/integrations?success=true&platform=${platform}`);
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        res.redirect(`${frontendUrl}/integrations?success=true&platform=${platform}`);
     }
     catch (err) {
         console.error('OAuth Callback Error:', err);
-        res.redirect(`http://localhost:5173/integrations?error=${encodeURIComponent(err.message)}`);
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        res.redirect(`${frontendUrl}/integrations?error=${encodeURIComponent(err.message)}`);
     }
 });
 // 5. Trigger Manual Sync

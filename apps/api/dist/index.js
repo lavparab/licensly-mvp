@@ -42,10 +42,25 @@ const helmet_1 = __importDefault(require("helmet"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const Sentry = __importStar(require("@sentry/node"));
 const profiling_node_1 = require("@sentry/profiling-node");
-const integrations_1 = __importDefault(require("./routes/integrations"));
-const sync_1 = require("./jobs/sync");
-const compliance_1 = require("./jobs/compliance");
+// Load env vars before anything else
 dotenv_1.default.config();
+// Route imports
+const integrations_1 = __importDefault(require("./routes/integrations"));
+const ai_1 = __importDefault(require("./routes/ai"));
+const reports_1 = __importDefault(require("./routes/reports"));
+const dashboard_1 = __importDefault(require("./routes/dashboard"));
+const licenses_1 = __importDefault(require("./routes/licenses"));
+const compliance_1 = __importDefault(require("./routes/compliance"));
+const settings_1 = __importDefault(require("./routes/settings"));
+const onboarding_1 = __importDefault(require("./routes/onboarding"));
+// Middleware imports
+const errorHandler_1 = require("./middleware/errorHandler");
+const rateLimit_1 = require("./middleware/rateLimit");
+// Jobs
+const sync_1 = require("./jobs/sync");
+const compliance_2 = require("./jobs/compliance");
+// Utils
+const logger_1 = require("./utils/logger");
 // Initialize Sentry
 Sentry.init({
     dsn: process.env.SENTRY_DSN || "",
@@ -56,24 +71,40 @@ Sentry.init({
 });
 const app = (0, express_1.default)();
 const port = process.env.PORT || 4000;
+// ── Global Middleware ──
 app.use((0, cors_1.default)({
     origin: process.env.FRONTEND_URL || '*',
     credentials: true,
 }));
 app.use((0, helmet_1.default)());
-app.use(express_1.default.json());
-// Initialize Background Jobs
-(0, sync_1.initCronJobs)();
-(0, compliance_1.initComplianceCronJobs)();
-app.get('/health', (req, res) => {
-    res.json({ status: 'ok', service: 'licensly-api' });
+app.use(express_1.default.json({ limit: '10mb' }));
+app.use(rateLimit_1.defaultLimiter);
+// ── Health Check ──
+app.get('/health', (_req, res) => {
+    res.json({
+        status: 'ok',
+        service: 'licensly-api',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+    });
 });
-const ai_1 = __importDefault(require("./routes/ai"));
-const reports_1 = __importDefault(require("./routes/reports"));
-// API Routes
+// ── API Routes ──
+app.use('/api/dashboard', dashboard_1.default);
+app.use('/api/licenses', licenses_1.default);
 app.use('/api/integrations', integrations_1.default);
+app.use('/api/compliance', compliance_1.default);
+app.use('/api/settings', settings_1.default);
+app.use('/api/onboarding', onboarding_1.default);
 app.use('/api/ai', ai_1.default);
 app.use('/api/reports', reports_1.default);
+// ── Global Error Handler (must be after routes) ──
+app.use(errorHandler_1.errorHandler);
+// ── Initialize Background Jobs ──
+(0, sync_1.initCronJobs)();
+(0, compliance_2.initComplianceCronJobs)();
+// ── Start Server ──
 app.listen(port, () => {
-    console.log(`API server running on port ${port}`);
+    logger_1.logger.info(`🚀 API server running on port ${port}`);
+    logger_1.logger.info(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
+exports.default = app;

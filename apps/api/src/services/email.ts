@@ -47,7 +47,7 @@ export async function sendComplianceAlertEmail(to: string, severity: string, mes
         <p style="margin: 0; font-size: 15px;">${message}</p>
       </div>
       <p style="font-size: 14px; color: #6b7280;">Log in to your Licensly dashboard to review and resolve this issue.</p>
-      <a href="http://localhost:5173/compliance" style="display: inline-block; background-color: #0f172a; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; margin-top: 10px;">Go to Dashboard</a>
+      <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/compliance" style="display: inline-block; background-color: #0f172a; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; margin-top: 10px;">Go to Dashboard</a>
     </div>
   `;
 
