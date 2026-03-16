@@ -22,14 +22,14 @@ export const Licenses = () => {
     const [platformFilter, setPlatformFilter] = useState('all');
     const [sortField, setSortField] = useState<SortField>('platform');
     const [sortDir, setSortDir] = useState<SortDir>('asc');
-    
+
     useEffect(() => {
         if (session) fetchLicenses();
     }, [session]);
 
     const fetchLicenses = async () => {
         try {
-            const maxLimit = 1000; // Fetch enough for client-side filtering
+            const maxLimit = 100; // Fetch enough for client-side filtering
             const data = await api.get(`/api/licenses?limit=${maxLimit}`);
             if (data && data.licenses) setLicenses(data.licenses);
         } catch (error) {
