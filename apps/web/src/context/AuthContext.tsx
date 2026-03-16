@@ -22,7 +22,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const checkOnboarding = async () => {
         try {
             const data = await api.get('/api/onboarding/status');
-            setOnboardingCompleted(data.completed ?? false);
+            setOnboardingCompleted(data.onboarding_completed ?? false);
         } catch (err) {
             console.error('Failed to fetch onboarding status', err);
         }
