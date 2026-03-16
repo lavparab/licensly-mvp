@@ -117,7 +117,9 @@ export const Onboarding = () => {
             });
 
             toast.success('Onboarding complete! Welcome to Licensly.');
-            navigate('/dashboard');
+
+            // Force a hard redirect so AuthContext re-fetches onboarding status
+            window.location.href = '/dashboard';
         } catch (err) {
             console.error('Onboarding error:', err);
             toast.error('Something went wrong. Please try again.');
@@ -149,8 +151,8 @@ export const Onboarding = () => {
                                         type="button"
                                         onClick={() => setIndustry(ind)}
                                         className={`rounded-lg border px-4 py-3 text-sm text-left transition-all ${industry === ind
-                                                ? 'border-primary bg-primary/10 text-primary font-medium'
-                                                : 'border-border hover:border-primary/50 hover:bg-muted'
+                                            ? 'border-primary bg-primary/10 text-primary font-medium'
+                                            : 'border-border hover:border-primary/50 hover:bg-muted'
                                             }`}
                                     >
                                         {ind}
@@ -167,8 +169,8 @@ export const Onboarding = () => {
                                         type="button"
                                         onClick={() => setCompanySize(size)}
                                         className={`rounded-lg border px-4 py-3 text-sm text-center transition-all ${companySize === size
-                                                ? 'border-primary bg-primary/10 text-primary font-medium'
-                                                : 'border-border hover:border-primary/50 hover:bg-muted'
+                                            ? 'border-primary bg-primary/10 text-primary font-medium'
+                                            : 'border-border hover:border-primary/50 hover:bg-muted'
                                             }`}
                                     >
                                         {size}
@@ -190,8 +192,8 @@ export const Onboarding = () => {
                                     type="button"
                                     onClick={() => togglePlatform(p.name)}
                                     className={`flex items-center gap-3 rounded-xl border-2 p-4 text-left transition-all ${selected
-                                            ? 'border-primary bg-primary/5 shadow-sm'
-                                            : 'border-border hover:border-primary/40 hover:bg-muted/50'
+                                        ? 'border-primary bg-primary/5 shadow-sm'
+                                        : 'border-border hover:border-primary/40 hover:bg-muted/50'
                                         }`}
                                 >
                                     <span className="text-2xl">{p.icon}</span>
