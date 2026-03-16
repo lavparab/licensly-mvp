@@ -17,24 +17,28 @@ export const Compliance = () => {
 
     const fetchData = async () => {
         try {
-            // Fetch alerts via backend API
-            const alertsResponse = await api.get('/api/compliance/alerts?is_resolved=false&limit=50');
-            // Fetch licenses with renewal dates via backend API
-            const licensesResponse = await api.get('/api/licenses?limit=10');
+            const [alertsResponse, licensesResponse] = await Promise.all([
+                api.get('/api/compliance/alerts?is_resolved=false&limit=50'),
+                api.get('/api/licenses?limit=10')
+            ]);
 
-            if (alertsResponse.alerts) setAlerts(alertsResponse.alerts);
-            if (licensesResponse.licenses) {
-                // Filter to only those with renewal dates and sort
-                const withRenewals = licensesResponse.licenses
-                    .filter((l: any) => l.renewal_date)
-                    .sort((a: any, b: any) => new Date(a.renewal_date).getTime() - new Date(b.renewal_date).getTime());
-                setRenewals(withRenewals);
-            }
+            // Handle both { alerts: [] } and direct array response
+            const alertsData = alertsResponse.alerts ?? alertsResponse ?? [];
+            const licensesData = licensesResponse.licenses ?? licensesResponse ?? [];
+
+            setAlerts(alertsData);
+
+            const withRenewals = licensesData
+                .filter((l: any) => l.renewal_date)
+                .sort((a: any, b: any) => new Date(a.renewal_date).getTime() - new Date(b.renewal_date).getTime());
+            setRenewals(withRenewals);
+
         } catch (err) {
             console.error('Error fetching compliance data:', err);
             toast.error('Failed to load compliance data');
+        } finally {
+            setIsLoading(false);
         }
-        finally { setIsLoading(false); }
     };
 
     const handleResolve = async (id: string) => {
