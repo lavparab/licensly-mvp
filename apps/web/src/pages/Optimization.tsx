@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Check, X, TrendingDown, Trash2, GitMerge, DollarSign, Loader2 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { toast } from 'sonner';
 
 type RecommendationType = 'downgrade' | 'remove' | 'consolidate';
@@ -28,12 +28,9 @@ export const Optimization = () => {
 
     const fetchRecommendations = async () => {
         try {
-            const { data, error } = await supabase
-                .from('optimization_recommendations')
-                .select('*, licenses(platform)')
-                .in('status', ['pending', 'accepted']);
+            const data = await api.get('/api/ai/recommendations');
 
-            if (!error && data) {
+            if (data) {
                 const mapped = data.map((rec: any) => ({
                     id: rec.id,
                     type: rec.type as RecommendationType,
@@ -43,13 +40,12 @@ export const Optimization = () => {
                     platform: rec.licenses?.platform || 'Unknown',
                     status: rec.status,
                 }));
-                setRecommendations(mapped.filter(r => r.status === 'pending'));
-                setAccepted(mapped.filter(r => r.status === 'accepted'));
+                setRecommendations(mapped.filter((r: Recommendation) => r.status === 'pending'));
+                setAccepted(mapped.filter((r: Recommendation) => r.status === 'accepted'));
             }
         } catch (error) { console.error('Error:', error); }
         finally { setIsLoading(false); }
     };
-
     const pendingSavings = recommendations.reduce((acc, r) => acc + r.savings, 0);
     const acceptedSavings = accepted.reduce((acc, r) => acc + r.savings, 0);
 
@@ -57,10 +53,9 @@ export const Optimization = () => {
         setActionId(id);
         const rec = recommendations.find(r => r.id === id);
         try {
-            await supabase
-                .from('optimization_recommendations')
-                .update({ status: action === 'accept' ? 'accepted' : 'dismissed' })
-                .eq('id', id);
+            await api.patch(`/api/ai/recommendations/${id}`, {
+                status: action === 'accept' ? 'accepted' : 'dismissed'
+            });
 
             if (action === 'accept' && rec) {
                 setAccepted(prev => [...prev, { ...rec, status: 'accepted' }]);
