@@ -5,6 +5,7 @@ import { Badge } from '../components/ui/badge';
 import { Check, X, TrendingDown, Trash2, GitMerge, DollarSign, Loader2 } from 'lucide-react';
 import { api } from '../lib/api';
 import { toast } from 'sonner';
+import { useAuth } from '../context/AuthContext';
 
 type RecommendationType = 'downgrade' | 'remove' | 'consolidate';
 
@@ -23,8 +24,11 @@ export const Optimization = () => {
     const [accepted, setAccepted] = useState<Recommendation[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [actionId, setActionId] = useState<string | null>(null);
+    const { session } = useAuth();
 
-    useEffect(() => { fetchRecommendations(); }, []);
+    useEffect(() => {
+        if (session) fetchRecommendations();
+    }, [session]);
 
     const fetchRecommendations = async () => {
         try {

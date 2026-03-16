@@ -8,28 +8,32 @@ import { Search, Download, Loader2, FileX, ArrowUpDown, Key } from 'lucide-react
 import { api } from '../lib/api';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 type SortField = 'platform' | 'seats_purchased' | 'cost_per_seat' | 'renewal_date' | 'utilization';
 type SortDir = 'asc' | 'desc';
 
 export const Licenses = () => {
     const navigate = useNavigate();
+    const { session } = useAuth();
     const [licenses, setLicenses] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [platformFilter, setPlatformFilter] = useState('all');
     const [sortField, setSortField] = useState<SortField>('platform');
     const [sortDir, setSortDir] = useState<SortDir>('asc');
-
-    useEffect(() => { fetchLicenses(); }, []);
+    
+    useEffect(() => {
+        if (session) fetchLicenses();
+    }, [session]);
 
     const fetchLicenses = async () => {
         try {
             const maxLimit = 1000; // Fetch enough for client-side filtering
             const data = await api.get(`/api/licenses?limit=${maxLimit}`);
             if (data && data.licenses) setLicenses(data.licenses);
-        } catch (error) { 
-            console.error('Error:', error); 
+        } catch (error) {
+            console.error('Error:', error);
             toast.error('Failed to load licenses');
         }
         finally { setIsLoading(false); }
