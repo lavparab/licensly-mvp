@@ -4,6 +4,7 @@ import { supabase } from '../utils/supabase';
 import { validate } from '../middleware/validate';
 import { asyncHandler } from '../middleware/errorHandler';
 import { alertFilterSchema } from '../types/schemas';
+import { checkOrganizationCompliance } from '../services/compliance';
 
 const router = Router();
 
@@ -93,6 +94,25 @@ router.get('/stats', requireAuth, asyncHandler(async (req: AuthRequest, res) => 
     };
 
     res.json({ stats });
+}));
+
+// POST /api/compliance/scan — Run compliance check for org
+router.post('/scan', requireAuth, asyncHandler(async (req: AuthRequest, res) => {
+    const orgId = req.orgId;
+    if (!orgId) return res.status(400).json({ error: 'Organization not found' });
+
+    await checkOrganizationCompliance(orgId);
+
+    // Re-fetch stats after scan
+    const { data: alerts, error } = await supabase
+        .from('compliance_alerts')
+        .select('*')
+        .eq('org_id', orgId)
+        .eq('is_resolved', false);
+
+    if (error) throw error;
+
+    res.json({ success: true, newAlertsCount: alerts.length, alerts });
 }));
 
 export default router;

@@ -11,6 +11,7 @@ export const Compliance = () => {
     const [alerts, setAlerts] = useState<any[]>([]);
     const [renewals, setRenewals] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isScanning, setIsScanning] = useState(false);
     const [actionId, setActionId] = useState<string | null>(null);
 
     useEffect(() => { fetchData(); }, []);
@@ -38,6 +39,24 @@ export const Compliance = () => {
             toast.error('Failed to load compliance data');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleRunScan = async () => {
+        setIsScanning(true);
+        try {
+            const res = await api.post('/api/compliance/scan');
+            if (res.newAlertsCount > 0) {
+                toast.warning(`Scan complete. Found ${res.newAlertsCount} new alerts.`);
+            } else {
+                toast.success('Scan complete. No new alerts found.');
+            }
+            await fetchData();
+        } catch (err: any) {
+            console.error('Scan failed:', err);
+            toast.error(err.message || 'Failed to run compliance scan.');
+        } finally {
+            setIsScanning(false);
         }
     };
 
@@ -69,9 +88,15 @@ export const Compliance = () => {
 
     return (
         <div className="flex flex-col gap-6">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Compliance</h1>
-                <p className="text-muted-foreground">Monitor compliance alerts and upcoming license renewals.</p>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Compliance</h1>
+                    <p className="text-muted-foreground">Monitor compliance alerts and upcoming license renewals.</p>
+                </div>
+                <Button onClick={handleRunScan} disabled={isScanning} variant="default">
+                    {isScanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+                    {isScanning ? 'Scanning...' : 'Run Compliance Scan'}
+                </Button>
             </div>
 
             {/* Summary Cards */}

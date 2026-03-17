@@ -23,6 +23,7 @@ export const Optimization = () => {
     const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
     const [accepted, setAccepted] = useState<Recommendation[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [actionId, setActionId] = useState<string | null>(null);
     const { session } = useAuth();
 
@@ -50,6 +51,21 @@ export const Optimization = () => {
         } catch (error) { console.error('Error:', error); }
         finally { setIsLoading(false); }
     };
+
+    const handleRunAnalysis = async () => {
+        setIsAnalyzing(true);
+        try {
+            await api.post('/api/ai/analyze');
+            toast.success('AI Analysis complete! New recommendations generated.');
+            await fetchRecommendations();
+        } catch (error: any) {
+            console.error('Analysis failed:', error);
+            toast.error(error.message || 'Failed to run AI analysis. Please ensure you have licenses and integrations setup.');
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
+
     const pendingSavings = recommendations.reduce((acc, r) => acc + r.savings, 0);
     const acceptedSavings = accepted.reduce((acc, r) => acc + r.savings, 0);
 
@@ -87,9 +103,15 @@ export const Optimization = () => {
 
     return (
         <div className="flex flex-col gap-6">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Optimization</h1>
-                <p className="text-muted-foreground">AI-driven recommendations to reduce wasted spend.</p>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Optimization</h1>
+                    <p className="text-muted-foreground">AI-driven recommendations to reduce wasted spend.</p>
+                </div>
+                <Button onClick={handleRunAnalysis} disabled={isAnalyzing} variant="default">
+                    {isAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <div className="mr-2 h-4 w-4 flex items-center justify-center">✨</div>}
+                    {isAnalyzing ? 'Analyzing...' : 'Run Analysis'}
+                </Button>
             </div>
 
             {/* Savings Counters */}
