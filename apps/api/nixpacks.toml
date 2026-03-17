@@ -8,4 +8,4 @@ cmds = ["npm install"]
 cmds = ["rm -rf dist", "npx tsc --project tsconfig.json"]
 
 [start]
-cmd = "node dist/index.js"
+cmd = "node dist/index.js"
