@@ -1,5 +1,6 @@
 import { IntegrationAdapter } from '../../types/integration';
 import { MockAdapter } from './MockAdapter';
+import { GithubAdapter } from './GithubAdapter';
 
 export class IntegrationManager {
     private adapters: Map<string, IntegrationAdapter> = new Map();
@@ -14,7 +15,7 @@ export class IntegrationManager {
         this.registerAdapter(new MockAdapter('Microsoft 365'));
         this.registerAdapter(new MockAdapter('Adobe Creative Cloud'));
         this.registerAdapter(new MockAdapter('Zoom'));
-        this.registerAdapter(new MockAdapter('GitHub'));
+        this.registerAdapter(new GithubAdapter());
         this.registerAdapter(new MockAdapter('Dropbox'));
     }
 
