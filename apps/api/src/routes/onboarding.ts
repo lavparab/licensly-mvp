@@ -91,7 +91,14 @@ router.post('/complete',
             metadata: { company_size, industry },
         });
 
-        res.json({ success: true, message: 'Onboarding completed successfully' });
+        res.json({
+            success: true,
+            message: 'Onboarding completed successfully',
+            debug: {
+                orgId,
+                licensesReceived: licenses?.length || 0
+            }
+        });
     })
 );
 
