@@ -7,7 +7,7 @@ import { onboardingCompleteSchema } from '../types/schemas';
 
 const router = Router();
 // temporarily remove validate middleware
-router.post('/complete', 
+router.post('/complete',
     requireAuth,
     (req, res, next) => {
         console.log('RAW BODY:', JSON.stringify(req.body));
@@ -60,12 +60,25 @@ router.post('/complete',
                     .toISOString().split('T')[0],
             }));
 
-            console.log('Inserting rows:', JSON.stringify(rows));
-            const { error: licError, data: licData } = await supabase
+            const { error: licError } = await supabase
                 .from('licenses')
                 .insert(rows);
-            console.log('License insert result:', licError, licData);
-            if (licError) throw licError;
+
+            if (licError) {
+                // Return error in response so we can see it
+                return res.status(200).json({
+                    success: false,
+                    licenseError: licError.message,
+                    licenseDetails: licError.details,
+                    rows: rows
+                });
+            }
+        } else {
+            return res.status(200).json({
+                success: false,
+                message: 'No licenses in body',
+                receivedBody: req.body
+            });
         }
 
         // Audit log
