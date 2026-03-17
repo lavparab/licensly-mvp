@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { integrationManager } from '../services/integrations';
 import { supabase } from '../utils/supabase';
+import { syncIntegrationData } from '../services/syncEngine';
 
 const router = Router();
 
@@ -77,10 +78,13 @@ router.get('/:platform/callback', async (req, res) => {
 
         if (dbError) throw dbError;
 
-        // Trigger initial sync here if necessary...
+        // Trigger initial sync here
+        // We do not strictly await the entire sync before returning to provide a snappier front-end experience.
+        // But for MVP, awaiting it ensures the user sees the data immediately.
+        await syncIntegrationData(data.id);
 
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-        res.redirect(`${frontendUrl}/integrations?success=true&platform=${platform}`);
+        res.redirect(`${frontendUrl}/integrations?success=true&platform=${encodeURIComponent(platform)}`);
     } catch (err: any) {
         console.error('OAuth Callback Error:', err);
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
@@ -103,14 +107,11 @@ router.post('/:id/sync', requireAuth, async (req: AuthRequest, res) => {
 
         if (error || !integration) throw new Error('Integration not found');
 
-        const adapter = integrationManager.getAdapter(integration.platform);
+        const success = await syncIntegrationData(integrationId);
 
-        // This is async, we can run it in the background or await it 
-        // In MVP, we might want to just schedule it and return quickly
-        // For now we'll do a mock sync...
-        await adapter.testConnection(''); // Mock test
+        if (!success) throw new Error('Sync failed');
 
-        res.json({ message: 'Sync triggered successfully', status: 'syncing' });
+        res.json({ message: 'Sync completed successfully', status: 'connected' });
     } catch (err: any) {
         res.status(400).json({ error: err.message });
     }

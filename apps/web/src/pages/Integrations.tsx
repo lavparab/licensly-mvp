@@ -28,7 +28,21 @@ export const Integrations = () => {
     const [connectProgress, setConnectProgress] = useState(0);
     const [disconnectTarget, setDisconnectTarget] = useState<any | null>(null);
 
-    useEffect(() => { fetchIntegrations(); }, []);
+    useEffect(() => { 
+        fetchIntegrations(); 
+        
+        // Handle OAuth callback success param
+        const searchParams = new URLSearchParams(window.location.search);
+        if (searchParams.get('success') === 'true') {
+            const platform = searchParams.get('platform');
+            toast.success(`Successfully connected ${platform}! Data synced.`);
+            // Clean up the URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } else if (searchParams.get('error')) {
+            toast.error(`Connection failed: ${searchParams.get('error')}`);
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }, []);
 
     const fetchIntegrations = async () => {
         try {
@@ -76,15 +90,16 @@ export const Integrations = () => {
 
     const handleSync = async (integration: any) => {
         setSyncingId(integration.id);
-        await new Promise(r => setTimeout(r, 2000));
+        
         try {
             await api.post(`/api/integrations/${integration.id}/sync`);
             await fetchIntegrations();
             toast.success(`${integration.platform} synced!`);
         } catch (err) {
             toast.error('Sync failed');
+        } finally {
+            setSyncingId(null);
         }
-        setSyncingId(null);
     };
 
     const getPlatformMeta = (name: string) => ALL_PLATFORMS.find(p => p.name === name) || { icon: '🔌', desc: 'Sync platform data' };
