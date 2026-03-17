@@ -37,6 +37,28 @@ router.post('/complete', requireAuth, validate(onboardingCompleteSchema), asyncH
 
     if (userError) throw userError;
 
+    // Insert licenses from onboarding
+    const { licenses } = req.body;
+    if (licenses && licenses.length > 0) {
+        const rows = licenses.map((lic: any) => ({
+            org_id: orgId,
+            platform: lic.platform,
+            plan_name: 'Standard',
+            seats_purchased: lic.seats,
+            seats_used: 0,
+            cost_per_seat: lic.costPerSeat,
+            billing_cycle: 'monthly',
+            renewal_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                .toISOString().split('T')[0],
+        }));
+
+        const { error: licError } = await supabase
+            .from('licenses')
+            .insert(rows);
+
+        if (licError) throw licError;
+    }
+
     // Audit log
     await supabase.from('audit_logs').insert({
         org_id: orgId,

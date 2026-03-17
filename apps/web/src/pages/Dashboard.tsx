@@ -39,25 +39,26 @@ export const Dashboard = () => {
         try {
             const data = await api.get('/api/dashboard/stats');
 
+            const s = data.stats || {};
             setStats({
-                totalSpend: data.total_monthly_spend || 0,
-                savings: data.potential_savings || 0,
-                activeSeats: data.seats_used || 0,
-                totalSeats: data.seats_purchased || 0,
-                criticalAlerts: data.active_alerts?.filter((a: any) => a.severity === 'critical').length || 0,
-                warningAlerts: data.active_alerts?.filter((a: any) => a.severity === 'warning').length || 0
+                totalSpend: s.totalSpend || 0,
+                savings: s.savings || 0,
+                activeSeats: s.activeSeats || 0,
+                totalSeats: s.totalSeats || 0,
+                criticalAlerts: s.criticalAlerts || 0,
+                warningAlerts: s.warningAlerts || 0,
             });
 
-            setPlatformSpend((data.top_platforms || []).map((p: any) => ({ name: p.platform, spend: Number(p.spend) })));
+            setPlatformSpend((data.platformSpend || []).map((p: any) => ({ name: p.name, spend: Number(p.spend) })));
 
-            setUtilizationData([
-                { name: 'Used', value: data.seats_used || 0, color: 'hsl(var(--chart-1))' },
-                { name: 'Available', value: Math.max((data.seats_purchased || 0) - (data.seats_used || 0), 0), color: 'hsl(var(--chart-3))' }
-            ]);
+            setUtilizationData((data.utilizationData || []).map((d: any, i: number) => ({
+                ...d,
+                color: i === 0 ? 'hsl(var(--chart-1))' : 'hsl(var(--chart-3))',
+            })));
 
-            setAlerts((data.active_alerts || []).slice(0, 5));
+            setAlerts((data.alerts || []).slice(0, 5));
 
-            const upcomingRenewals = data.upcoming_renewals || [];
+            const upcomingRenewals = data.upcomingRenewals || [];
             setRenewals(upcomingRenewals.sort((a: any, b: any) => new Date(a.renewal_date).getTime() - new Date(b.renewal_date).getTime()));
 
             const licensesRes = await api.get('/api/licenses?limit=100');

@@ -41,6 +41,12 @@ export const onboardingCompleteSchema = z.object({
     company_size: z.string().min(1, 'Company size is required'),
     industry: z.string().min(1, 'Industry is required'),
     org_name: z.string().min(1).optional(),
+    platforms: z.array(z.string()).optional(),
+    licenses: z.array(z.object({
+        platform: z.string().min(1),
+        seats: z.number().int().min(1),
+        costPerSeat: z.number().min(0),
+    })).optional(),
 });
 
 // ── Report Schema ──
