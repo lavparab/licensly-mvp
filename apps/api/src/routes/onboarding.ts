@@ -9,6 +9,7 @@ const router = Router();
 
 // POST /api/onboarding/complete — Complete the onboarding flow
 router.post('/complete', requireAuth, validate(onboardingCompleteSchema), asyncHandler(async (req: AuthRequest, res) => {
+    console.log('Onboarding body:', JSON.stringify(req.body)); // ✅ ADD THIS LINE
     const userId = req.user?.id;
     const orgId = req.orgId;
 
