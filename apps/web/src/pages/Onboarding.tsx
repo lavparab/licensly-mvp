@@ -118,8 +118,11 @@ export const Onboarding = () => {
 
             toast.success('Onboarding complete! Welcome to Licensly.');
 
+            await new Promise(resolve => setTimeout(resolve, 2000));
             // Force a hard redirect so AuthContext re-fetches onboarding status
-            window.location.href = '/dashboard';
+            setTimeout(() => {
+                window.location.href = '/dashboard';
+            }, 3000);
         } catch (err) {
             console.error('Onboarding error:', err);
             toast.error('Something went wrong. Please try again.');
