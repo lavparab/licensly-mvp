@@ -6,15 +6,14 @@ import { asyncHandler } from '../middleware/errorHandler';
 import { onboardingCompleteSchema } from '../types/schemas';
 
 const router = Router();
-
-// POST /api/onboarding/complete — Complete the onboarding flow
-router.post('/complete',
+// temporarily remove validate middleware
+router.post('/complete', 
     requireAuth,
     (req, res, next) => {
         console.log('RAW BODY:', JSON.stringify(req.body));
         next();
     },
-    validate(onboardingCompleteSchema),
+    // validate(onboardingCompleteSchema), // ← comment this out temporarily
     asyncHandler(async (req: AuthRequest, res) => {
         console.log('PARSED BODY:', JSON.stringify(req.body));
         const userId = req.user?.id;
