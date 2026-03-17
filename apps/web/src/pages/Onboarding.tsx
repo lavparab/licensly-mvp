@@ -108,7 +108,7 @@ export const Onboarding = () => {
         setIsSubmitting(true);
 
         try {
-            await api.post('/api/onboarding/complete', {
+            const result = await api.post('/api/onboarding/complete', {
                 company_size: companySize,
                 industry: industry,
                 org_name: companyName,
@@ -116,13 +116,13 @@ export const Onboarding = () => {
                 licenses: licenseInputs
             });
 
+            console.log('ONBOARDING RESULT:', JSON.stringify(result)); // log result
             toast.success('Onboarding complete! Welcome to Licensly.');
 
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            // Force a hard redirect so AuthContext re-fetches onboarding status
-            setTimeout(() => {
-                window.location.href = '/dashboard';
-            }, 3000);
+            // temporarily comment out redirect
+            // setTimeout(() => {
+            //     window.location.href = '/dashboard';
+            // }, 3000);
         } catch (err) {
             console.error('Onboarding error:', err);
             toast.error('Something went wrong. Please try again.');
