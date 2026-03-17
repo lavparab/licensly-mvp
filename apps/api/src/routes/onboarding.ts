@@ -6,101 +6,71 @@ import { asyncHandler } from '../middleware/errorHandler';
 import { onboardingCompleteSchema } from '../types/schemas';
 
 const router = Router();
-// temporarily remove validate middleware
-router.post('/complete',
-    requireAuth,
-    (req, res, next) => {
-        console.log('RAW BODY:', JSON.stringify(req.body));
-        next();
-    },
-    // validate(onboardingCompleteSchema), // ← comment this out temporarily
-    asyncHandler(async (req: AuthRequest, res) => {
-        console.log('PARSED BODY:', JSON.stringify(req.body));
-        const userId = req.user?.id;
-        const orgId = req.orgId;
 
-        if (!userId || !orgId) {
-            return res.status(400).json({ error: 'User or organization not found' });
-        }
+// POST /api/onboarding/complete — Complete the onboarding flow
+router.post('/complete', requireAuth, validate(onboardingCompleteSchema), asyncHandler(async (req: AuthRequest, res) => {
+    const userId = req.user?.id;
+    const orgId = req.orgId;
 
-        const { company_size, industry, org_name } = req.body;
+    if (!userId || !orgId) {
+        return res.status(400).json({ error: 'User or organization not found' });
+    }
 
-        // Update org with onboarding data
-        const orgUpdate: Record<string, any> = { company_size, industry };
-        if (org_name) orgUpdate.name = org_name;
+    const { company_size, industry, org_name } = req.body;
 
-        const { error: orgError } = await supabase
-            .from('organizations')
-            .update(orgUpdate)
-            .eq('id', orgId);
+    // Update org with onboarding data
+    const orgUpdate: Record<string, any> = { company_size, industry };
+    if (org_name) orgUpdate.name = org_name;
 
-        if (orgError) throw orgError;
+    const { error: orgError } = await supabase
+        .from('organizations')
+        .update(orgUpdate)
+        .eq('id', orgId);
 
-        // Mark onboarding as completed for the user
-        const { error: userError } = await supabase
-            .from('users')
-            .update({ onboarding_completed: true })
-            .eq('id', userId);
+    if (orgError) throw orgError;
 
-        if (userError) throw userError;
+    // Mark onboarding as completed for the user
+    const { error: userError } = await supabase
+        .from('users')
+        .update({ onboarding_completed: true })
+        .eq('id', userId);
 
-        // Insert licenses from onboarding
-        const { licenses } = req.body;
-        console.log('Licenses from body:', JSON.stringify(licenses));
-        if (licenses && licenses.length > 0) {
-            const rows = licenses.map((lic: any) => ({
-                org_id: orgId,
-                platform: lic.platform,
-                plan_name: 'Standard',
-                seats_purchased: lic.seats,
-                seats_used: 0,
-                cost_per_seat: lic.costPerSeat,
-                billing_cycle: 'monthly',
-                renewal_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-                    .toISOString().split('T')[0],
-            }));
+    if (userError) throw userError;
 
-            const { error: licError } = await supabase
-                .from('licenses')
-                .insert(rows);
-
-            if (licError) {
-                // Return error in response so we can see it
-                return res.status(200).json({
-                    success: false,
-                    licenseError: licError.message,
-                    licenseDetails: licError.details,
-                    rows: rows
-                });
-            }
-        } else {
-            return res.status(200).json({
-                success: false,
-                message: 'No licenses in body',
-                receivedBody: req.body
-            });
-        }
-
-        // Audit log
-        await supabase.from('audit_logs').insert({
+    // Insert licenses from onboarding
+    const { licenses } = req.body;
+    if (licenses && licenses.length > 0) {
+        const rows = licenses.map((lic: any) => ({
             org_id: orgId,
-            user_id: userId,
-            action: 'onboarding_completed',
-            entity_type: 'user',
-            entity_id: userId,
-            metadata: { company_size, industry },
-        });
+            platform: lic.platform,
+            plan_name: 'Standard',
+            seats_purchased: lic.seats,
+            seats_used: 0,
+            cost_per_seat: lic.costPerSeat,
+            billing_cycle: 'monthly',
+            renewal_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                .toISOString().split('T')[0],
+        }));
 
-        res.json({
-            success: true,
-            message: 'Onboarding completed successfully',
-            debug: {
-                orgId,
-                licensesReceived: licenses?.length || 0
-            }
-        });
-    })
-);
+        const { error: licError } = await supabase
+            .from('licenses')
+            .insert(rows);
+
+        if (licError) throw licError;
+    }
+
+    // Audit log
+    await supabase.from('audit_logs').insert({
+        org_id: orgId,
+        user_id: userId,
+        action: 'onboarding_completed',
+        entity_type: 'user',
+        entity_id: userId,
+        metadata: { company_size, industry },
+    });
+
+    res.json({ success: true, message: 'Onboarding completed successfully' });
+}));
 
 // GET /api/onboarding/status — Check onboarding status
 router.get('/status', requireAuth, asyncHandler(async (req: AuthRequest, res) => {
