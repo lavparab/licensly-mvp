@@ -37,6 +37,13 @@ router.post('/complete', requireAuth, validate(onboardingCompleteSchema), asyncH
 
     if (userError) throw userError;
 
+    console.log('Inserting licenses:', JSON.stringify(rows));
+    const { error: licError, data: licData } = await supabase
+        .from('licenses')
+        .insert(rows);
+    console.log('License insert result:', licError, licData);
+    if (licError) throw licError;
+
     // Insert licenses from onboarding
     const { licenses } = req.body;
     if (licenses && licenses.length > 0) {
