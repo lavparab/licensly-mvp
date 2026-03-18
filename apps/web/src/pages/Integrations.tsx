@@ -28,9 +28,9 @@ export const Integrations = () => {
     const [connectProgress, setConnectProgress] = useState(0);
     const [disconnectTarget, setDisconnectTarget] = useState<any | null>(null);
 
-    useEffect(() => { 
-        fetchIntegrations(); 
-        
+    useEffect(() => {
+        fetchIntegrations();
+
         // Handle OAuth callback success param
         const searchParams = new URLSearchParams(window.location.search);
         if (searchParams.get('success') === 'true') {
@@ -56,24 +56,26 @@ export const Integrations = () => {
         setConnectingPlatform(platform);
         setConnectProgress(0);
 
-        // Simulate OAuth flow
         const interval = setInterval(() => {
             setConnectProgress(prev => {
-                if (prev >= 100) { clearInterval(interval); return 100; }
+                if (prev >= 80) { clearInterval(interval); return 80; }
                 return prev + 20;
             });
         }, 400);
 
-        await new Promise(r => setTimeout(r, 2500));
-        clearInterval(interval);
-        setConnectProgress(100);
-
         try {
-            window.location.href = `/api/integrations/${platform}/auth`;
+            // Call backend to get the OAuth URL
+            const data = await api.get(`/api/integrations/${platform.toLowerCase()}/auth`);
+            clearInterval(interval);
+            setConnectProgress(100);
+
+            // Redirect to the OAuth URL returned by the backend
+            window.location.href = data.url;
         } catch (err) {
+            clearInterval(interval);
             toast.error(`Failed to connect ${platform}`);
+            setConnectingPlatform(null);
         }
-        setConnectingPlatform(null);
     };
 
     const handleDisconnect = async () => {
@@ -90,7 +92,7 @@ export const Integrations = () => {
 
     const handleSync = async (integration: any) => {
         setSyncingId(integration.id);
-        
+
         try {
             await api.post(`/api/integrations/${integration.id}/sync`);
             await fetchIntegrations();

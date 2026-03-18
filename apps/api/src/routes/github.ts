@@ -10,7 +10,7 @@ const router = Router();
 router.get('/connect', requireAuth, async (req: AuthRequest, res) => {
     try {
         const adapter = integrationManager.getAdapter('github');
-        const redirectUri = `${req.protocol}://${req.get('host')}/api/integrations/github/callback`;
+        const redirectUri = `${process.env.API_URL}/api/integrations/github/callback`;
         const state = Buffer.from(JSON.stringify({ orgId: req.orgId })).toString('base64');
         const authUrl = adapter.getAuthUrl(state, redirectUri);
         res.json({ url: authUrl });
@@ -64,7 +64,7 @@ async function getGithubToken(orgId: string) {
         .eq('org_id', orgId)
         .eq('platform', 'github')
         .single();
-    
+
     if (error || !integration) throw new Error('GitHub integration not found');
     const credentials = JSON.parse(integration.credentials_encrypted as string);
     return credentials.accessToken;
@@ -88,10 +88,10 @@ router.get('/idle', requireAuth, async (req: AuthRequest, res) => {
         const token = await getGithubToken(req.orgId!);
         const adapter = integrationManager.getAdapter('github') as any;
         const members = await adapter.fetchOrgMembersWithActivity(token);
-        
+
         // Filter by activity score < 50 or no commits in 30 days
         const idleMembers = members.filter((m: any) => m.activityScore < 50);
-        
+
         res.json({ idleMembers });
     } catch (error: any) {
         res.status(500).json({ error: error.message });
