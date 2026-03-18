@@ -35,13 +35,13 @@ router.get('/:platform/auth', requireAuth, async (req: AuthRequest, res) => {
         const platform = req.params.platform;
         const adapter = integrationManager.getAdapter(platform);
 
-        // Create a local dev callback URL
-        const redirectUri = `${req.protocol}://${req.get('host')}/api/integrations/${platform}/callback`;
+        // FIXED: use API_URL env var instead of req.protocol
+        const redirectUri = `${process.env.API_URL}/api/integrations/${platform}/callback`;
 
-        // We pass the orgId in the state to correlate the callback later
         const state = Buffer.from(JSON.stringify({ orgId: req.orgId })).toString('base64');
         const authUrl = adapter.getAuthUrl(state, redirectUri);
 
+        console.log('=== AUTH URL ===', authUrl); // keep this for now
         res.json({ url: authUrl });
     } catch (error: any) {
         res.status(400).json({ error: error.message });
@@ -60,8 +60,7 @@ router.get('/:platform/callback', async (req, res) => {
         const orgId = stateData.orgId;
 
         const adapter = integrationManager.getAdapter(platform);
-        const redirectUri = `${req.protocol}://${req.get('host')}/api/integrations/${platform}/callback`;
-
+        const redirectUri = `${process.env.API_URL}/api/integrations/${platform}/callback`;
         // Authenticate and fetch token
         const authResult = await adapter.authenticate({ code: code as string }, redirectUri);
 
