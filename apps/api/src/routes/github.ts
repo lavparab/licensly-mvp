@@ -32,7 +32,7 @@ router.get('/callback', async (req, res) => {
         const orgId = stateData.orgId;
 
         const adapter = integrationManager.getAdapter('github');
-        const redirectUri = `${req.protocol}://${req.get('host')}/api/integrations/github/callback`;
+        const redirectUri = `${process.env.API_URL}/api/integrations/github/callback`;
 
         const authResult = await adapter.authenticate({ code: code as string }, redirectUri);
 
