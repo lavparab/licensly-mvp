@@ -3,7 +3,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription }
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
-import { Unplug, CheckCircle2, RotateCw, AlertCircle, Loader2, Link2Off, Plug } from 'lucide-react';
+import { Unplug, CheckCircle2, RotateCw, AlertCircle, Loader2, Link2Off, Plug, Users, UserX, Bot, GitCommit, GitPullRequest, Eye, Activity, ChevronDown, ChevronUp } from 'lucide-react';
 import { api } from '../lib/api';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
@@ -20,6 +20,214 @@ const ALL_PLATFORMS = [
     { name: 'Canva', icon: '🖌️', desc: 'Graphic design platform' },
 ];
 
+interface Member {
+    login: string;
+    avatarUrl: string;
+    lastCommitDate: string;
+    lastPrDate: string;
+    lastReviewDate: string;
+    activityScore: number;
+    status: 'active' | 'idle';
+}
+
+interface CopilotData {
+    enabled: boolean;
+    assigned: number;
+    used: number;
+    costPerSeat?: number;
+}
+
+function timeAgo(dateStr: string) {
+    const days = Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24));
+    if (days === 0) return 'Today';
+    if (days === 1) return '1d ago';
+    if (days < 30) return `${days}d ago`;
+    if (days < 365) return `${Math.floor(days / 30)}mo ago`;
+    return `${Math.floor(days / 365)}y ago`;
+}
+
+function ScoreBar({ score }: { score: number }) {
+    const color = score >= 75 ? '#22c55e' : score >= 50 ? '#f59e0b' : '#ef4444';
+    return (
+        <div className="flex items-center gap-2">
+            <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${score}%`, backgroundColor: color }} />
+            </div>
+            <span className="text-xs font-mono w-6 text-right" style={{ color }}>{score}</span>
+        </div>
+    );
+}
+
+function GithubDataPanel() {
+    const [members, setMembers] = useState<Member[]>([]);
+    const [idleMembers, setIdleMembers] = useState<Member[]>([]);
+    const [copilot, setCopilot] = useState<CopilotData | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState<'members' | 'idle' | 'copilot'>('members');
+
+    useEffect(() => {
+        Promise.all([
+            api.get('/api/integrations/github/members'),
+            api.get('/api/integrations/github/idle'),
+            api.get('/api/integrations/github/copilot'),
+        ]).then(([membersRes, idleRes, copilotRes]) => {
+            setMembers(membersRes.members || []);
+            setIdleMembers(idleRes.idleMembers || []);
+            setCopilot(copilotRes.copilotData);
+        }).catch(err => {
+            toast.error('Failed to load GitHub data: ' + err.message);
+        }).finally(() => setLoading(false));
+    }, []);
+
+    const tabs = [
+        { id: 'members' as const, label: 'Members', icon: Users, count: members.length },
+        { id: 'idle' as const, label: 'Idle', icon: UserX, count: idleMembers.length },
+        { id: 'copilot' as const, label: 'Copilot', icon: Bot, count: null },
+    ];
+
+    if (loading) return (
+        <div className="flex justify-center items-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+    );
+
+    return (
+        <div className="mt-4 border-t pt-4">
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-3">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                        <p className="text-lg font-bold leading-none">{members.length}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Members</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-950/30 rounded-lg p-3">
+                    <UserX className="h-4 w-4 text-amber-500" />
+                    <div>
+                        <p className="text-lg font-bold leading-none">{idleMembers.length}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Idle</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3">
+                    <Bot className="h-4 w-4 text-blue-500" />
+                    <div>
+                        <p className="text-lg font-bold leading-none">{copilot ? `${copilot.used}/${copilot.assigned}` : '—'}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Copilot</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex gap-1 border-b mb-3">
+                {tabs.map(tab => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border-b-2 transition-colors ${activeTab === tab.id
+                                ? 'border-primary text-primary'
+                                : 'border-transparent text-muted-foreground hover:text-foreground'
+                            }`}
+                    >
+                        <tab.icon className="h-3 w-3" />
+                        {tab.label}
+                        {tab.count !== null && (
+                            <Badge variant="secondary" className="text-xs px-1 py-0 h-4">{tab.count}</Badge>
+                        )}
+                    </button>
+                ))}
+            </div>
+
+            {/* Members Tab */}
+            {activeTab === 'members' && (
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                    {members.length === 0 ? (
+                        <p className="text-xs text-muted-foreground text-center py-6">No members found</p>
+                    ) : members.map(member => (
+                        <div key={member.login} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                            <img src={member.avatarUrl} alt={member.login} className="h-7 w-7 rounded-full border flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5 mb-1">
+                                    <p className="text-xs font-medium truncate">{member.login}</p>
+                                    <Badge variant={member.status === 'active' ? 'default' : 'secondary'} className="text-xs px-1 py-0 h-4 flex-shrink-0">
+                                        {member.status}
+                                    </Badge>
+                                </div>
+                                <ScoreBar score={member.activityScore} />
+                            </div>
+                            <div className="hidden sm:flex items-center gap-3 text-xs text-muted-foreground flex-shrink-0">
+                                <span className="flex items-center gap-1"><GitCommit className="h-3 w-3" />{timeAgo(member.lastCommitDate)}</span>
+                                <span className="flex items-center gap-1"><GitPullRequest className="h-3 w-3" />{timeAgo(member.lastPrDate)}</span>
+                                <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{timeAgo(member.lastReviewDate)}</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Idle Tab */}
+            {activeTab === 'idle' && (
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                    {idleMembers.length === 0 ? (
+                        <div className="text-center py-6">
+                            <p className="text-xs font-medium">No idle members 🎉</p>
+                            <p className="text-xs text-muted-foreground mt-1">All members have activity score above 50</p>
+                        </div>
+                    ) : idleMembers.map(member => (
+                        <div key={member.login} className="flex items-center gap-3 p-2 rounded-lg bg-amber-50/50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900">
+                            <img src={member.avatarUrl} alt={member.login} className="h-7 w-7 rounded-full border flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5 mb-1">
+                                    <p className="text-xs font-medium truncate">{member.login}</p>
+                                    <Badge variant="secondary" className="text-xs px-1 py-0 h-4 text-amber-600 flex-shrink-0">idle</Badge>
+                                </div>
+                                <ScoreBar score={member.activityScore} />
+                            </div>
+                            <span className="text-xs text-muted-foreground flex-shrink-0 flex items-center gap-1">
+                                <GitCommit className="h-3 w-3" />{timeAgo(member.lastCommitDate)}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Copilot Tab */}
+            {activeTab === 'copilot' && (
+                <div className="grid grid-cols-2 gap-3">
+                    {!copilot ? (
+                        <p className="text-xs text-muted-foreground col-span-2 text-center py-6">No Copilot data available</p>
+                    ) : (
+                        <>
+                            <div className="bg-muted/50 rounded-lg p-3">
+                                <div className="flex items-center gap-1.5 mb-2">
+                                    <Activity className="h-3 w-3 text-muted-foreground" />
+                                    <p className="text-xs font-medium">Seat Usage</p>
+                                </div>
+                                <p className="text-2xl font-bold">{copilot.used}<span className="text-sm font-normal text-muted-foreground">/{copilot.assigned}</span></p>
+                                <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden mt-2">
+                                    <div className="h-full bg-blue-500 rounded-full" style={{ width: `${(copilot.used / copilot.assigned) * 100}%` }} />
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">{copilot.assigned - copilot.used} unassigned</p>
+                            </div>
+                            {copilot.costPerSeat && (
+                                <div className="bg-muted/50 rounded-lg p-3">
+                                    <div className="flex items-center gap-1.5 mb-2">
+                                        <Bot className="h-3 w-3 text-muted-foreground" />
+                                        <p className="text-xs font-medium">Monthly Cost</p>
+                                    </div>
+                                    <p className="text-2xl font-bold">${(copilot.used * copilot.costPerSeat).toFixed(0)}<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+                                    <p className="text-xs text-muted-foreground mt-2">${copilot.costPerSeat}/seat × {copilot.used} seats</p>
+                                    <p className="text-xs text-green-600 mt-1">Save ${((copilot.assigned - copilot.used) * copilot.costPerSeat).toFixed(0)}/mo by removing unused</p>
+                                </div>
+                            )}
+                        </>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
 export const Integrations = () => {
     const [integrations, setIntegrations] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -27,16 +235,14 @@ export const Integrations = () => {
     const [connectingPlatform, setConnectingPlatform] = useState<string | null>(null);
     const [connectProgress, setConnectProgress] = useState(0);
     const [disconnectTarget, setDisconnectTarget] = useState<any | null>(null);
+    const [expandedPlatforms, setExpandedPlatforms] = useState<Set<string>>(new Set());
 
     useEffect(() => {
         fetchIntegrations();
-
-        // Handle OAuth callback success param
         const searchParams = new URLSearchParams(window.location.search);
         if (searchParams.get('success') === 'true') {
             const platform = searchParams.get('platform');
             toast.success(`Successfully connected ${platform}! Data synced.`);
-            // Clean up the URL
             window.history.replaceState({}, document.title, window.location.pathname);
         } else if (searchParams.get('error')) {
             toast.error(`Connection failed: ${searchParams.get('error')}`);
@@ -48,8 +254,11 @@ export const Integrations = () => {
         try {
             const data = await api.get('/api/integrations');
             if (data && data.integrations) setIntegrations(data.integrations);
-        } catch (error) { console.error('Error fetching integrations:', error); }
-        finally { setIsLoading(false); }
+        } catch (error) {
+            console.error('Error fetching integrations:', error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleConnect = async (platform: string) => {
@@ -64,12 +273,9 @@ export const Integrations = () => {
         }, 400);
 
         try {
-            // Call backend to get the OAuth URL
             const data = await api.get(`/api/integrations/${platform.toLowerCase()}/auth`);
             clearInterval(interval);
             setConnectProgress(100);
-
-            // Redirect to the OAuth URL returned by the backend
             window.location.href = data.url;
         } catch (err) {
             clearInterval(interval);
@@ -92,7 +298,6 @@ export const Integrations = () => {
 
     const handleSync = async (integration: any) => {
         setSyncingId(integration.id);
-
         try {
             await api.post(`/api/integrations/${integration.id}/sync`);
             await fetchIntegrations();
@@ -104,9 +309,20 @@ export const Integrations = () => {
         }
     };
 
-    const getPlatformMeta = (name: string) => ALL_PLATFORMS.find(p => p.name === name) || { icon: '🔌', desc: 'Sync platform data' };
-    const connectedNames = integrations.filter(i => i.status === 'connected').map(i => i.platform);
-    const availablePlatforms = ALL_PLATFORMS.filter(p => !connectedNames.includes(p.name));
+    const toggleExpand = (platform: string) => {
+        setExpandedPlatforms(prev => {
+            const next = new Set(prev);
+            next.has(platform) ? next.delete(platform) : next.add(platform);
+            return next;
+        });
+    };
+
+    // Platforms that have a detail panel
+    const EXPANDABLE_PLATFORMS = ['github'];
+
+    const getPlatformMeta = (name: string) => ALL_PLATFORMS.find(p => p.name.toLowerCase() === name.toLowerCase()) || { icon: '🔌', desc: 'Sync platform data', name };
+    const connectedNames = integrations.filter(i => i.status === 'connected').map(i => i.platform.toLowerCase());
+    const availablePlatforms = ALL_PLATFORMS.filter(p => !connectedNames.includes(p.name.toLowerCase()));
 
     return (
         <div className="flex flex-col gap-6">
@@ -116,7 +332,9 @@ export const Integrations = () => {
             </div>
 
             {isLoading ? (
-                <div className="flex justify-center items-center h-48"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+                <div className="flex justify-center items-center h-48">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
             ) : (
                 <>
                     {/* Connected */}
@@ -126,9 +344,12 @@ export const Integrations = () => {
                                 <CheckCircle2 className="h-5 w-5 text-green-500" /> Connected
                                 <Badge variant="secondary">{integrations.filter(i => i.status === 'connected').length}</Badge>
                             </h2>
-                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
                                 {integrations.filter(i => i.status === 'connected').map(integration => {
                                     const meta = getPlatformMeta(integration.platform);
+                                    const isExpandable = EXPANDABLE_PLATFORMS.includes(integration.platform.toLowerCase());
+                                    const isExpanded = expandedPlatforms.has(integration.platform.toLowerCase());
+
                                     return (
                                         <Card key={integration.id} className="flex flex-col">
                                             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -145,6 +366,10 @@ export const Integrations = () => {
                                                     <CheckCircle2 className="h-4 w-4" />
                                                     <span>Connected {integration.last_synced_at ? `• Synced ${formatDistanceToNow(new Date(integration.last_synced_at), { addSuffix: true })}` : ''}</span>
                                                 </div>
+                                                {/* Expandable detail panel */}
+                                                {isExpandable && isExpanded && (
+                                                    integration.platform.toLowerCase() === 'github' && <GithubDataPanel />
+                                                )}
                                             </CardContent>
                                             <CardFooter className="pt-2 border-t">
                                                 <div className="flex w-full gap-2">
@@ -152,6 +377,12 @@ export const Integrations = () => {
                                                         <RotateCw className={`mr-2 h-4 w-4 ${syncingId === integration.id ? 'animate-spin' : ''}`} />
                                                         {syncingId === integration.id ? 'Syncing...' : 'Sync'}
                                                     </Button>
+                                                    {isExpandable && (
+                                                        <Button variant="outline" onClick={() => toggleExpand(integration.platform.toLowerCase())}>
+                                                            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                                            {isExpanded ? 'Hide' : 'View Data'}
+                                                        </Button>
+                                                    )}
                                                     <Button variant="ghost" className="text-destructive" onClick={() => setDisconnectTarget(integration)}>
                                                         <Link2Off className="mr-2 h-4 w-4" /> Disconnect
                                                     </Button>
@@ -164,7 +395,7 @@ export const Integrations = () => {
                         </div>
                     )}
 
-                    {/* Disconnected from DB */}
+                    {/* Disconnected */}
                     {integrations.filter(i => i.status === 'disconnected').length > 0 && (
                         <div>
                             <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
