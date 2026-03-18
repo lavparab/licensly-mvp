@@ -125,8 +125,8 @@ function GithubDataPanel() {
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
                         className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border-b-2 transition-colors ${activeTab === tab.id
-                                ? 'border-primary text-primary'
-                                : 'border-transparent text-muted-foreground hover:text-foreground'
+                            ? 'border-primary text-primary'
+                            : 'border-transparent text-muted-foreground hover:text-foreground'
                             }`}
                     >
                         <tab.icon className="h-3 w-3" />
@@ -346,6 +346,7 @@ export const Integrations = () => {
                             </h2>
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
                                 {integrations.filter(i => i.status === 'connected').map(integration => {
+                                    console.log('Platform name from DB:', integration.platform); // ADD THIS
                                     const meta = getPlatformMeta(integration.platform);
                                     const isExpandable = EXPANDABLE_PLATFORMS.includes(integration.platform.toLowerCase());
                                     const isExpanded = expandedPlatforms.has(integration.platform.toLowerCase());
