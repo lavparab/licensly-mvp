@@ -13,6 +13,9 @@ router.get('/connect', requireAuth, async (req: AuthRequest, res) => {
         const redirectUri = `${process.env.API_URL}/api/integrations/github/callback`;
         const state = Buffer.from(JSON.stringify({ orgId: req.orgId })).toString('base64');
         const authUrl = adapter.getAuthUrl(state, redirectUri);
+
+        console.log('=== GITHUB AUTH URL ===', authUrl); // ADD THIS
+
         res.json({ url: authUrl });
     } catch (error: any) {
         res.status(400).json({ error: error.message });
