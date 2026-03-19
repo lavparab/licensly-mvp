@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
@@ -40,6 +40,19 @@ export const Licenses = () => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [editTarget, setEditTarget] = useState<any | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+                setOpenMenuId(null);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     useEffect(() => {
         if (session) fetchLicenses();
@@ -196,21 +209,32 @@ export const Licenses = () => {
                                             <TableCell className="font-medium">${(Number(lic.cost_per_seat) * lic.seats_purchased).toLocaleString()}</TableCell>
                                             <TableCell>{lic.renewal_date ? new Date(lic.renewal_date).toLocaleDateString() : '—'}</TableCell>
                                             <TableCell>
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                            <MoreHorizontal className="h-4 w-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem onSelect={() => handleEdit(lic)}>
-                                                            <Pencil className="mr-2 h-4 w-4" /> Edit
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onSelect={() => handleDelete(lic.id)} className="text-destructive focus:text-destructive">
-                                                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
+                                                <div className="relative" ref={openMenuId === lic.id ? menuRef : undefined}>
+                                                    <button
+                                                        onClick={() => setOpenMenuId(openMenuId === lic.id ? null : lic.id)}
+                                                        className="flex items-center justify-center h-8 w-8 rounded-md hover:bg-gray-100 transition-colors"
+                                                    >
+                                                        <MoreHorizontal className="h-4 w-4 text-gray-500" />
+                                                    </button>
+                                                    {openMenuId === lic.id && (
+                                                        <div className="absolute right-0 top-9 w-[160px] bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]">
+                                                            <div className="p-1">
+                                                                <button
+                                                                    onClick={() => { setOpenMenuId(null); handleEdit(lic); }}
+                                                                    className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-gray-700 hover:bg-gray-50 rounded-md transition-colors text-left"
+                                                                >
+                                                                    <Pencil className="h-4 w-4 text-gray-500" /> Edit
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => { setOpenMenuId(null); handleDelete(lic.id); }}
+                                                                    className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-red-600 hover:bg-red-50 rounded-md transition-colors text-left"
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" /> Delete
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     );
