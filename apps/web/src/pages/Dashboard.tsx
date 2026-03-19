@@ -111,7 +111,7 @@ export const Dashboard = () => {
         <>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div>
-                    <h1 className="font-serif text-[32px] tracking-tight text-[var(--text-primary)]">Dashboard</h1>
+                    <h1 className="font-sans font-semibold text-[32px] tracking-tight text-[var(--text-primary)]">Dashboard</h1>
                     <p className="text-[14px] text-[var(--text-muted)]">Monitor your corporate SaaS licenses and identify savings.</p>
                 </div>
                 <div className="flex gap-2">

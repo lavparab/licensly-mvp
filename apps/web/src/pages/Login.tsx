@@ -95,7 +95,7 @@ export const Login = () => {
                     </div>
 
                     <div className="space-y-1.5 mb-8">
-                        <h2 className="font-serif text-[24px] text-[var(--text-primary)] tracking-tight">Sign in</h2>
+                        <h2 className="font-sans font-semibold text-[24px] text-[var(--text-primary)] tracking-tight">Sign in</h2>
                         <p className="text-[14px] text-[var(--text-muted)]">
                             Enter your credentials to access your dashboard
                         </p>

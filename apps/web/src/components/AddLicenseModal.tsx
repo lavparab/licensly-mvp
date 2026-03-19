@@ -108,7 +108,7 @@ export function AddLicenseModal({ open, onClose, onSuccess }: AddLicenseModalPro
             <DialogContent className="sm:max-w-[600px] p-6">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader className="mb-4">
-                        <DialogTitle className="font-serif text-[24px] tracking-tight">Add New License</DialogTitle>
+                        <DialogTitle className="font-sans font-semibold text-[24px] tracking-tight">Add New License</DialogTitle>
                     </DialogHeader>
 
                     {error && (
