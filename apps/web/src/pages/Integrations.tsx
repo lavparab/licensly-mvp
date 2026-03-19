@@ -654,7 +654,8 @@ export const Integrations = () => {
         }, 400);
 
         try {
-            const data = await api.get(`/api/integrations/${platform.toLowerCase()}/auth`);
+            const slug = platform.toLowerCase().replace(/\s+/g, '-');
+            const data = await api.get(`/api/integrations/${slug}/auth`);
             clearInterval(interval);
             setConnectProgress(100);
             window.location.href = data.url;
