@@ -27,7 +27,7 @@ router.get('/connect', requireAuth, async (req: AuthRequest, res) => {
         const redirectUri = `${process.env.API_URL}/api/integrations/slack/callback`;
         const state = Buffer.from(JSON.stringify({ orgId: req.orgId })).toString('base64');
         const authUrl = adapter.getAuthUrl(state, redirectUri);
-        
+
         res.json({ url: authUrl });
     } catch (error: any) {
         res.status(400).json({ error: error.message });
@@ -93,7 +93,7 @@ router.get('/inactive', requireAuth, async (req: AuthRequest, res) => {
     try {
         const token = await getSlackToken(req.orgId!);
         const adapter = integrationManager.getAdapter('slack') as any;
-        
+
         // Fetch users using the generic method to get deleted statuses too, or workspace members if preferred.
         // wait, fetchUsers returns active/idle. Let's use fetchWorkspaceMembers for all and filter if it supports deleted.
         // Wait, fetchWorkspaceMembers filters out deleted. Let's use users.list directly or modify fetchWorkspaceMembers.
@@ -101,12 +101,12 @@ router.get('/inactive', requireAuth, async (req: AuthRequest, res) => {
         // But fetchWorkspaceMembers currently filters deleted users!
         // Let's modify fetchWorkspaceMembers in SlackAdapter to NOT filter deleted users, since it's used here, OR we can fetch them directly.
         // Let's just use adapter.fetchUsers and filter.
-        
+
         // To precisely match prompt: "fetch members, filter where status === 'inactive'"
         // Let's use adapter.fetchUsers which maps deleted to idle/inactive.
         const users = await adapter.fetchUsers(token);
         const inactiveMembers = users.filter((u: any) => u.status === 'idle' || u.status === 'inactive');
-        
+
         res.json({ inactiveMembers });
     } catch (error: any) {
         res.status(500).json({ error: error.message });
@@ -117,20 +117,13 @@ router.get('/inactive', requireAuth, async (req: AuthRequest, res) => {
 router.get('/workspace', requireAuth, async (req: AuthRequest, res) => {
     try {
         const token = await getSlackToken(req.orgId!);
-        const axios = require('axios'); // require locally to use inside route, or better use adapter method
-        
-        const teamResponse = await axios.get('https://slack.com/api/team.info', {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-
-        if (!teamResponse.data.ok) throw new Error(teamResponse.data.error);
-
-        res.json({ workspace: teamResponse.data.team });
+        const adapter = integrationManager.getAdapter('slack') as any;
+        const team = await adapter.fetchWorkspaceInfo(token);
+        res.json({ team });
     } catch (error: any) {
         res.status(500).json({ error: error.message });
     }
 });
-
 // POST /api/integrations/slack/disconnect
 router.post('/disconnect', requireAuth, async (req: AuthRequest, res) => {
     try {
