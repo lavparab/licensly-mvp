@@ -96,7 +96,7 @@ router.post('/', requireAuth, asyncHandler(async (req: AuthRequest, res) => {
             seats_purchased: Number(seats_purchased),
             seats_used: Number(seats_used) || 0,
             cost_per_seat: Number(cost_per_seat),
-            billing_cycle,
+            billing_cycle: billing_cycle.toLowerCase(), // ← fix here
             renewal_date,
             vendor,
             category,
