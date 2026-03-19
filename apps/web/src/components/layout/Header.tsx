@@ -139,7 +139,7 @@ export function Header() {
                                     <DropdownMenuItem
                                         key={notif.id}
                                         className={`cursor-pointer flex items-start gap-3 px-4 py-3.5 rounded-none border-b border-[var(--border)] last:border-0 ${!notif.read ? 'bg-blue-50/40 hover:bg-blue-50/60' : 'hover:bg-[var(--bg-secondary)]'}`}
-                                        onClick={() => markRead(notif.id)}
+                                        onSelect={(e) => { e.preventDefault(); markRead(notif.id); }}
                                     >
                                         <div className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${notif.type === 'success' ? 'bg-green-500' : notif.type === 'warning' ? 'bg-amber-500' : 'bg-blue-500'}`} />
                                         <div className="flex flex-col gap-0.5 w-full">
@@ -178,15 +178,15 @@ export function Header() {
                             <span className="text-[12px] text-[var(--text-muted)] truncate">{orgName}</span>
                         </div>
                         <div className="p-1">
-                            <DropdownMenuItem className="cursor-pointer text-[13px] px-3 py-2 rounded-[4px] hover:bg-[var(--bg-secondary)]" onClick={() => navigate('/settings/profile')}>
+                            <DropdownMenuItem className="cursor-pointer text-[13px] px-3 py-2 rounded-[4px] hover:bg-[var(--bg-secondary)]" onSelect={() => navigate('/settings')}>
                                 <User className="mr-2.5 h-4 w-4 text-[var(--text-secondary)]" /> Profile Settings
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer text-[13px] px-3 py-2 rounded-[4px] hover:bg-[var(--bg-secondary)]" onClick={() => navigate('/settings/organization')}>
+                            <DropdownMenuItem className="cursor-pointer text-[13px] px-3 py-2 rounded-[4px] hover:bg-[var(--bg-secondary)]" onSelect={() => navigate('/settings')}>
                                 <Building className="mr-2.5 h-4 w-4 text-[var(--text-secondary)]" /> Organization
                             </DropdownMenuItem>
                             <DropdownMenuSeparator className="my-1 border-[var(--border)]" />
                             <DropdownMenuItem
-                                onClick={handleSignOut}
+                                onSelect={handleSignOut}
                                 className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer text-[13px] px-3 py-2 rounded-[4px]"
                             >
                                 <LogOut className="mr-2.5 h-4 w-4" /> Log out
