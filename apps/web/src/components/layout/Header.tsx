@@ -90,7 +90,7 @@ export function Header() {
     const userDisplayName = user?.user_metadata?.full_name || user?.email || 'User';
 
     return (
-        <header className="sticky top-0 z-10 flex h-[52px] shrink-0 items-center gap-4 border-b border-gray-200 bg-white px-4 lg:px-6">
+        <header className="sticky top-0 z-10 flex h-[52px] shrink-0 items-center gap-4 border-b border-gray-200 dark:border-[#2e2e2e] bg-white dark:bg-black px-4 lg:px-6">
 
             {/* Mobile Sidebar Toggle */}
             <Sheet>
@@ -107,11 +107,11 @@ export function Header() {
 
             {/* Breadcrumb */}
             <div className="w-full flex-1 flex items-center gap-2">
-                <Link to="/dashboard" className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
+                <Link to="/dashboard" className="text-sm text-gray-400 hover:text-gray-700 dark:text-[#666666] dark:hover:text-[#ededed] transition-colors">
                     Home
                 </Link>
-                <ChevronRight className="h-3 w-3 text-gray-400" />
-                <span className="text-sm font-medium text-gray-900">{currentPage}</span>
+                <ChevronRight className="h-3 w-3 text-gray-400 dark:text-[#666666]" />
+                <span className="text-sm font-medium text-gray-900 dark:text-[#ededed]">{currentPage}</span>
             </div>
 
             <div className="flex items-center gap-2 md:ml-auto">
@@ -120,9 +120,9 @@ export function Header() {
                 <div className="relative" ref={bellRef}>
                     <button
                         onClick={() => { setBellOpen(!bellOpen); setUserOpen(false); }}
-                        className="relative flex items-center justify-center h-9 w-9 rounded-md border border-gray-200 bg-white hover:bg-gray-50 transition-colors"
+                        className="relative flex items-center justify-center h-9 w-9 rounded-md border border-gray-200 dark:border-[#2e2e2e] bg-white dark:bg-black hover:bg-gray-50 dark:hover:bg-[#111111] transition-colors"
                     >
-                        <Bell className="h-[18px] w-[18px] text-gray-600" />
+                        <Bell className="h-[18px] w-[18px] text-gray-600 dark:text-[#a1a1a1]" />
                         {unreadCount > 0 && (
                             <span className="absolute -top-1.5 -right-1.5 h-4 min-w-4 px-1 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold">
                                 {unreadCount}
@@ -131,13 +131,13 @@ export function Header() {
                     </button>
 
                     {bellOpen && (
-                        <div className="absolute right-0 top-11 w-[360px] max-h-[400px] overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-xl z-[9999]">
-                            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 sticky top-0 bg-white">
-                                <span className="font-semibold text-sm text-gray-900">Notifications</span>
+                        <div className="absolute right-0 top-11 w-[360px] max-h-[400px] overflow-y-auto bg-white dark:bg-[#111111] border border-gray-200 dark:border-[#2e2e2e] rounded-lg shadow-xl z-[9999]">
+                            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-[#2e2e2e] sticky top-0 bg-white dark:bg-[#111111]">
+                                <span className="font-semibold text-sm text-gray-900 dark:text-[#ededed]">Notifications</span>
                                 {unreadCount > 0 && (
                                     <button
                                         onClick={markAllRead}
-                                        className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+                                        className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
                                     >
                                         <Check className="h-3 w-3" /> Mark all as read
                                     </button>
@@ -148,19 +148,19 @@ export function Header() {
                                     <div
                                         key={notif.id}
                                         onClick={() => markRead(notif.id)}
-                                        className={`flex items-start gap-3 px-4 py-3.5 border-b border-gray-50 cursor-pointer last:border-0 transition-colors ${!notif.read ? 'bg-blue-50/50 hover:bg-blue-50' : 'hover:bg-gray-50'}`}
+                                        className={`flex items-start gap-3 px-4 py-3.5 border-b border-gray-50 dark:border-[#2e2e2e] cursor-pointer last:border-0 transition-colors ${!notif.read ? 'bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-50 dark:hover:bg-blue-950/30' : 'hover:bg-gray-50 dark:hover:bg-[#1a1a1a]'}`}
                                     >
                                         <div className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${notif.type === 'success' ? 'bg-green-500' : notif.type === 'warning' ? 'bg-amber-500' : 'bg-blue-500'}`} />
                                         <div className="flex flex-col gap-0.5 w-full">
                                             <div className="flex justify-between items-start gap-2">
-                                                <span className={`text-[13px] text-gray-900 ${!notif.read ? 'font-semibold' : 'font-medium'}`}>{notif.title}</span>
-                                                <span className="text-[11px] text-gray-400 whitespace-nowrap pt-0.5">{notif.time}</span>
+                                                <span className={`text-[13px] text-gray-900 dark:text-[#ededed] ${!notif.read ? 'font-semibold' : 'font-medium'}`}>{notif.title}</span>
+                                                <span className="text-[11px] text-gray-400 dark:text-[#666666] whitespace-nowrap pt-0.5">{notif.time}</span>
                                             </div>
-                                            <span className="text-[12px] text-gray-500 line-clamp-2">{notif.message}</span>
+                                            <span className="text-[12px] text-gray-500 dark:text-[#666666] line-clamp-2">{notif.message}</span>
                                         </div>
                                     </div>
                                 )) : (
-                                    <div className="p-8 text-sm text-center text-gray-400">
+                                    <div className="p-8 text-sm text-center text-gray-400 dark:text-[#666666]">
                                         No new notifications
                                     </div>
                                 )}
@@ -173,34 +173,34 @@ export function Header() {
                 <div className="relative ml-1" ref={userRef}>
                     <button
                         onClick={() => { setUserOpen(!userOpen); setBellOpen(false); }}
-                        className="flex items-center justify-center h-8 w-8 rounded-full bg-gray-100 border border-gray-200 hover:bg-gray-200 transition-colors"
+                        className="flex items-center justify-center h-8 w-8 rounded-full bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2e2e2e] hover:bg-gray-200 dark:hover:bg-[#2e2e2e] transition-colors"
                     >
-                        <span className="text-[13px] font-medium text-gray-700">{userInitials}</span>
+                        <span className="text-[13px] font-medium text-gray-700 dark:text-[#ededed]">{userInitials}</span>
                     </button>
 
                     {userOpen && (
-                        <div className="absolute right-0 top-10 w-[220px] bg-white border border-gray-200 rounded-lg shadow-xl z-[9999]">
-                            <div className="px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-lg">
-                                <p className="font-semibold text-[14px] text-gray-900 truncate">{userDisplayName}</p>
-                                <p className="text-[12px] text-gray-500 truncate">{orgName}</p>
+                        <div className="absolute right-0 top-10 w-[220px] bg-white dark:bg-[#111111] border border-gray-200 dark:border-[#2e2e2e] rounded-lg shadow-xl z-[9999]">
+                            <div className="px-4 py-3 border-b border-gray-100 dark:border-[#2e2e2e] bg-gray-50 dark:bg-[#1a1a1a] rounded-t-lg">
+                                <p className="font-semibold text-[14px] text-gray-900 dark:text-[#ededed] truncate">{userDisplayName}</p>
+                                <p className="text-[12px] text-gray-500 dark:text-[#666666] truncate">{orgName}</p>
                             </div>
                             <div className="p-1">
                                 <button
                                     onClick={() => { setUserOpen(false); navigate('/settings'); }}
-                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] text-gray-700 hover:bg-gray-50 rounded-md transition-colors text-left"
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] text-gray-700 dark:text-[#a1a1a1] hover:bg-gray-50 dark:hover:bg-[#1a1a1a] rounded-md transition-colors text-left"
                                 >
-                                    <User className="h-4 w-4 text-gray-500 shrink-0" /> Profile Settings
+                                    <User className="h-4 w-4 text-gray-500 dark:text-[#666666] shrink-0" /> Profile Settings
                                 </button>
                                 <button
                                     onClick={() => { setUserOpen(false); navigate('/settings'); }}
-                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] text-gray-700 hover:bg-gray-50 rounded-md transition-colors text-left"
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] text-gray-700 dark:text-[#a1a1a1] hover:bg-gray-50 dark:hover:bg-[#1a1a1a] rounded-md transition-colors text-left"
                                 >
-                                    <Building className="h-4 w-4 text-gray-500 shrink-0" /> Organization
+                                    <Building className="h-4 w-4 text-gray-500 dark:text-[#666666] shrink-0" /> Organization
                                 </button>
-                                <div className="my-1 border-t border-gray-100" />
+                                <div className="my-1 border-t border-gray-100 dark:border-[#2e2e2e]" />
                                 <button
                                     onClick={handleSignOut}
-                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] text-red-600 hover:bg-red-50 rounded-md transition-colors text-left"
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-md transition-colors text-left"
                                 >
                                     <LogOut className="h-4 w-4 shrink-0" /> Log out
                                 </button>
