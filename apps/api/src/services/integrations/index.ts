@@ -2,6 +2,7 @@ import { IntegrationAdapter } from '../../types/integration';
 import { MockAdapter } from './MockAdapter';
 import { GithubAdapter } from './GithubAdapter';
 import { SlackAdapter } from './SlackAdapter';
+import { GoogleWorkspaceAdapter } from './GoogleWorkspaceAdapter';
 
 export class IntegrationManager {
     private adapters: Map<string, IntegrationAdapter> = new Map();
@@ -11,8 +12,8 @@ export class IntegrationManager {
         // In a real scenario, these would be specific classes (SlackAdapter, GithubAdapter, etc.)
         // For the MVP MVP demo, using MockAdapters simulates data pipelines.
         this.registerAdapter(new SlackAdapter());
+        this.registerAdapter(new GoogleWorkspaceAdapter());
         this.registerAdapter(new MockAdapter('Microsoft Teams'));
-        this.registerAdapter(new MockAdapter('Google Workspace'));
         this.registerAdapter(new MockAdapter('Microsoft 365'));
         this.registerAdapter(new MockAdapter('Adobe Creative Cloud'));
         this.registerAdapter(new MockAdapter('Zoom'));

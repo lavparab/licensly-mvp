@@ -3,7 +3,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription }
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
-import { Unplug, CheckCircle2, RotateCw, AlertCircle, Loader2, Link2Off, Plug, Users, UserX, Bot, GitCommit, GitPullRequest, Eye, Activity, ChevronDown, ChevronUp, Building } from 'lucide-react';
+import { Unplug, CheckCircle2, RotateCw, AlertCircle, Loader2, Link2Off, Plug, Users, UserX, Bot, GitCommit, GitPullRequest, Eye, Activity, ChevronDown, ChevronUp, Building, Globe } from 'lucide-react';
 import { api } from '../lib/api';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
@@ -411,6 +411,204 @@ function SlackDataPanel() {
     );
 }
 
+interface GoogleWorkspaceUser {
+    id: string;
+    name: string;
+    email: string;
+    isAdmin: boolean;
+    isSuspended: boolean;
+    status: 'active' | 'suspended';
+    lastLoginTime: string;
+    avatarUrl: string;
+    orgUnit: string;
+}
+
+interface GoogleWorkspaceDomainInfo {
+    domain: string;
+    isPrimary: boolean;
+    verified: boolean;
+    totalUsers: number;
+}
+
+function GoogleWorkspaceDataPanel() {
+    const [users, setUsers] = useState<GoogleWorkspaceUser[]>([]);
+    const [suspendedUsers, setSuspendedUsers] = useState<GoogleWorkspaceUser[]>([]);
+    const [domain, setDomain] = useState<GoogleWorkspaceDomainInfo | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState<'users' | 'suspended' | 'domain'>('users');
+
+    useEffect(() => {
+        Promise.all([
+            api.get('/api/integrations/google-workspace/users'),
+            api.get('/api/integrations/google-workspace/suspended'),
+            api.get('/api/integrations/google-workspace/domain'),
+        ]).then(([usersRes, suspendedRes, domainRes]) => {
+            setUsers(usersRes.users || []);
+            setSuspendedUsers(suspendedRes.suspendedUsers || []);
+            setDomain(domainRes.domain || null);
+        }).catch(err => {
+            toast.error('Failed to load Google Workspace data: ' + err.message);
+        }).finally(() => setLoading(false));
+    }, []);
+
+    const tabs = [
+        { id: 'users' as const, label: 'Users', icon: Users, count: users.length },
+        { id: 'suspended' as const, label: 'Suspended', icon: UserX, count: suspendedUsers.length },
+        { id: 'domain' as const, label: 'Domain', icon: Globe, count: null },
+    ];
+
+    if (loading) return (
+        <div className="flex justify-center items-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+    );
+
+    return (
+        <div className="mt-4 border-t pt-4">
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3">
+                    <Users className="h-4 w-4 text-blue-500" />
+                    <div>
+                        <p className="text-lg font-bold leading-none">{users.length}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Users</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-950/30 rounded-lg p-3">
+                    <UserX className="h-4 w-4 text-amber-500" />
+                    <div>
+                        <p className="text-lg font-bold leading-none">{suspendedUsers.length}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Suspended</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2 bg-green-50 dark:bg-green-950/30 rounded-lg p-3">
+                    <Globe className="h-4 w-4 text-green-500" />
+                    <div className="min-w-0">
+                        <p className="text-lg font-bold leading-none truncate">{domain?.domain || '—'}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Domain</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex gap-1 border-b mb-3">
+                {tabs.map(tab => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border-b-2 transition-colors ${activeTab === tab.id
+                            ? 'border-primary text-primary'
+                            : 'border-transparent text-muted-foreground hover:text-foreground'
+                            }`}
+                    >
+                        <tab.icon className="h-3 w-3" />
+                        {tab.label}
+                        {tab.count !== null && (
+                            <Badge variant="secondary" className="text-xs px-1 py-0 h-4">{tab.count}</Badge>
+                        )}
+                    </button>
+                ))}
+            </div>
+
+            {/* Users Tab */}
+            {activeTab === 'users' && (
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                    {users.length === 0 ? (
+                        <p className="text-xs text-muted-foreground text-center py-6">No users found</p>
+                    ) : users.map(user => (
+                        <div key={user.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                            {user.avatarUrl ? (
+                                <img src={user.avatarUrl} alt={user.name} className="h-7 w-7 rounded-full border flex-shrink-0" />
+                            ) : (
+                                <div className="h-7 w-7 rounded-full border flex-shrink-0 bg-muted flex items-center justify-center">
+                                    <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                                </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                    <p className="text-xs font-medium truncate">{user.name}</p>
+                                    {user.isAdmin && <Badge variant="secondary" className="text-xs px-1 py-0 h-4 flex-shrink-0">Admin</Badge>}
+                                </div>
+                                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                            </div>
+                            <Badge variant={user.status === 'active' ? 'default' : 'secondary'} className="text-xs px-1 py-0 h-4 flex-shrink-0">
+                                {user.status}
+                            </Badge>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Suspended Tab */}
+            {activeTab === 'suspended' && (
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                    {suspendedUsers.length === 0 ? (
+                        <div className="text-center py-6">
+                            <p className="text-xs font-medium">No suspended users 🎉</p>
+                            <p className="text-xs text-muted-foreground mt-1">All users are currently active</p>
+                        </div>
+                    ) : suspendedUsers.map(user => (
+                        <div key={user.id} className="flex items-center gap-3 p-2 rounded-lg bg-amber-50/50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900">
+                            {user.avatarUrl ? (
+                                <img src={user.avatarUrl} alt={user.name} className="h-7 w-7 rounded-full border flex-shrink-0" />
+                            ) : (
+                                <div className="h-7 w-7 rounded-full border flex-shrink-0 bg-muted flex items-center justify-center">
+                                    <UserX className="h-3.5 w-3.5 text-amber-500/70" />
+                                </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                    <p className="text-xs font-medium truncate">{user.name}</p>
+                                    {user.isAdmin && <Badge variant="secondary" className="text-xs px-1 py-0 h-4 flex-shrink-0 bg-transparent border-amber-200 text-amber-700">Admin</Badge>}
+                                </div>
+                                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                            </div>
+                            <Badge variant="secondary" className="text-xs px-1 py-0 h-4 text-amber-600 flex-shrink-0 border-amber-200">
+                                suspended
+                            </Badge>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Domain Tab */}
+            {activeTab === 'domain' && (
+                <div className="grid grid-cols-2 gap-3">
+                    {!domain ? (
+                        <p className="text-xs text-muted-foreground col-span-2 text-center py-6">No domain data available</p>
+                    ) : (
+                        <>
+                            <div className="bg-muted/50 rounded-lg p-3 col-span-2">
+                                <div className="flex items-center gap-1.5 mb-3">
+                                    <Globe className="h-3 w-3 text-muted-foreground" />
+                                    <p className="text-xs font-medium">Domain Information</p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Domain</p>
+                                        <p className="text-sm font-medium">{domain.domain}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Status</p>
+                                        <div className="flex mt-0.5 gap-2">
+                                            {domain.verified && <Badge variant="default" className="text-[10px] px-1 h-4 bg-green-500 hover:bg-green-600">Verified</Badge>}
+                                            {domain.isPrimary && <Badge variant="secondary" className="text-[10px] px-1 h-4">Primary</Badge>}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Total Users</p>
+                                        <p className="text-sm font-medium">{domain.totalUsers}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
 export const Integrations = () => {
     const [integrations, setIntegrations] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -501,7 +699,7 @@ export const Integrations = () => {
     };
 
     // Platforms that have a detail panel
-    const EXPANDABLE_PLATFORMS = ['github', 'slack'];
+    const EXPANDABLE_PLATFORMS = ['github', 'slack', 'google-workspace'];
 
     const getPlatformMeta = (name: string) => ALL_PLATFORMS.find(p => p.name.toLowerCase() === name.toLowerCase()) || { icon: '🔌', desc: 'Sync platform data', name };
     const connectedNames = integrations.filter(i => i.status === 'connected').map(i => i.platform.toLowerCase());
@@ -554,6 +752,7 @@ export const Integrations = () => {
                                                     <>
                                                         {integration.platform.toLowerCase() === 'github' && <GithubDataPanel />}
                                                         {integration.platform.toLowerCase() === 'slack' && <SlackDataPanel />}
+                                                        {integration.platform.toLowerCase() === 'google-workspace' && <GoogleWorkspaceDataPanel />}
                                                     </>
                                                 )}
                                             </CardContent>
