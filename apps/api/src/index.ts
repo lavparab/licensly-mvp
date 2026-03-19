@@ -21,6 +21,7 @@ import licensesRoutes from './routes/licenses';
 import complianceRoutes from './routes/compliance';
 import settingsRoutes from './routes/settings';
 import onboardingRoutes from './routes/onboarding';
+import notificationsRouter from './routes/notifications';
 
 // Middleware imports
 import { errorHandler } from './middleware/errorHandler';
@@ -77,6 +78,7 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/onboarding', onboardingRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/reports', reportsRoutes);
+app.use('/api/notifications', notificationsRouter);
 
 // ── Global Error Handler (must be after routes) ──
 app.use(errorHandler);
