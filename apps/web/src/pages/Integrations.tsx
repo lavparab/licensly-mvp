@@ -16,7 +16,6 @@ const ALL_PLATFORMS = [
     { name: 'Adobe Creative Cloud', icon: '🎨', desc: 'Entitlements and user groups' },
     { name: 'Zoom', icon: '📹', desc: 'Pro plans and meeting usage' },
     { name: 'GitHub', icon: '🐙', desc: 'Org members and billing seats' },
-    { name: 'Dropbox', icon: '📦', desc: 'Cloud storage & sharing' },
     { name: 'Canva', icon: '🖌️', desc: 'Graphic design platform' },
 ];
 
@@ -789,9 +788,9 @@ function DropboxDataPanel() {
                                     </span>
                                 </div>
                                 <div className="w-full h-2 bg-muted rounded-full overflow-hidden mt-2">
-                                    <div 
-                                        className="h-full bg-blue-500 rounded-full" 
-                                        style={{ width: `${Math.min(100, (storage.usedStorage / storage.allocatedStorage) * 100)}%` }} 
+                                    <div
+                                        className="h-full bg-blue-500 rounded-full"
+                                        style={{ width: `${Math.min(100, (storage.usedStorage / storage.allocatedStorage) * 100)}%` }}
                                     />
                                 </div>
                                 <p className="text-xs text-muted-foreground mt-2">
