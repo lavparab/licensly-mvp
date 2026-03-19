@@ -4,6 +4,7 @@ import { GithubAdapter } from './GithubAdapter';
 import { SlackAdapter } from './SlackAdapter';
 import { GoogleWorkspaceAdapter } from './GoogleWorkspaceAdapter';
 import { DropboxAdapter } from './DropboxAdapter';
+import { ZoomAdapter } from './ZoomAdapter';
 
 export class IntegrationManager {
     private adapters: Map<string, IntegrationAdapter> = new Map();
@@ -17,7 +18,7 @@ export class IntegrationManager {
         this.registerAdapter(new MockAdapter('Microsoft Teams'));
         this.registerAdapter(new MockAdapter('Microsoft 365'));
         this.registerAdapter(new MockAdapter('Adobe Creative Cloud'));
-        this.registerAdapter(new MockAdapter('Zoom'));
+        this.registerAdapter(new ZoomAdapter());
         this.registerAdapter(new GithubAdapter());
         this.registerAdapter(new DropboxAdapter());
     }

@@ -805,6 +805,217 @@ function DropboxDataPanel() {
     );
 }
 
+interface ZoomMember {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    type: 'Licensed' | 'Basic' | 'Enterprise';
+    status: string;
+    lastLoginTime: string;
+    avatarUrl: string | null;
+    timezone: string;
+}
+
+interface ZoomAccount {
+    accountName: string;
+    plan: string;
+    totalUsers: number;
+    licensedUsers: number;
+    basicUsers: number;
+}
+
+function ZoomDataPanel() {
+    const [members, setMembers] = useState<ZoomMember[]>([]);
+    const [inactiveMembers, setInactiveMembers] = useState<ZoomMember[]>([]);
+    const [account, setAccount] = useState<ZoomAccount | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState<'members' | 'inactive' | 'account'>('members');
+
+    useEffect(() => {
+        Promise.all([
+            api.get('/api/integrations/zoom/members'),
+            api.get('/api/integrations/zoom/inactive'),
+            api.get('/api/integrations/zoom/account'),
+        ]).then(([membersRes, inactiveRes, accountRes]) => {
+            setMembers(membersRes.members || []);
+            setInactiveMembers(inactiveRes.inactiveMembers || []);
+            setAccount(accountRes.account || null);
+        }).catch(err => {
+            toast.error('Failed to load Zoom data: ' + err.message);
+        }).finally(() => setLoading(false));
+    }, []);
+
+    const tabs = [
+        { id: 'members' as const, label: 'Members', icon: Users, count: members.length },
+        { id: 'inactive' as const, label: 'Inactive', icon: UserX, count: inactiveMembers.length },
+        { id: 'account' as const, label: 'Account', icon: Building, count: null },
+    ];
+
+    if (loading) return (
+        <div className="flex justify-center items-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+    );
+
+    return (
+        <div className="mt-4 border-t pt-4">
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3">
+                    <Users className="h-4 w-4 text-blue-500" />
+                    <div>
+                        <p className="text-lg font-bold leading-none">{members.length}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Total members</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-950/30 rounded-lg p-3">
+                    <UserX className="h-4 w-4 text-amber-500" />
+                    <div>
+                        <p className="text-lg font-bold leading-none">{inactiveMembers.length}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Inactive</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2 bg-green-50 dark:bg-green-950/30 rounded-lg p-3">
+                    <Video className="h-4 w-4 text-green-500" />
+                    <div className="min-w-0">
+                        <p className="text-lg font-bold leading-none truncate">{account?.licensedUsers || 0}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Licensed seats</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex gap-1 border-b mb-3">
+                {tabs.map(tab => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border-b-2 transition-colors ${activeTab === tab.id
+                            ? 'border-primary text-primary'
+                            : 'border-transparent text-muted-foreground hover:text-foreground'
+                            }`}
+                    >
+                        <tab.icon className="h-3 w-3" />
+                        {tab.label}
+                        {tab.count !== null && (
+                            <Badge variant="secondary" className="text-xs px-1 py-0 h-4">{tab.count}</Badge>
+                        )}
+                    </button>
+                ))}
+            </div>
+
+            {/* Members Tab */}
+            {activeTab === 'members' && (
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                    {members.length === 0 ? (
+                        <p className="text-xs text-muted-foreground text-center py-6">No members found</p>
+                    ) : members.map(member => (
+                        <div key={member.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                            {member.avatarUrl ? (
+                                <img src={member.avatarUrl} alt={member.name} className="h-7 w-7 rounded-full border flex-shrink-0" />
+                            ) : (
+                                <div className="h-7 w-7 rounded-full border flex-shrink-0 bg-muted flex items-center justify-center">
+                                    <span className="text-[10px] font-medium text-muted-foreground">
+                                        {member.name?.charAt(0)?.toUpperCase() || 'U'}
+                                    </span>
+                                </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                    <p className="text-xs font-medium truncate">{member.name}</p>
+                                    {member.role === 'admin' && <Badge variant="secondary" className="text-xs px-1 py-0 h-4 flex-shrink-0">Admin</Badge>}
+                                </div>
+                                <p className="text-xs text-muted-foreground truncate">{member.email}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Badge variant={member.type === 'Licensed' ? 'default' : 'outline'} className={`text-[10px] px-1 h-4 ${member.type === 'Licensed' ? 'bg-green-500 hover:bg-green-600' : ''}`}>
+                                    {member.type}
+                                </Badge>
+                                <Badge variant={member.status === 'active' ? 'secondary' : 'outline'} className="text-[10px] px-1 h-4">
+                                    {member.status}
+                                </Badge>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Inactive Tab */}
+            {activeTab === 'inactive' && (
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                    {inactiveMembers.length === 0 ? (
+                        <div className="text-center py-6">
+                            <p className="text-xs font-medium">No inactive members 🎉</p>
+                            <p className="text-xs text-muted-foreground mt-1">All members actively using Zoom</p>
+                        </div>
+                    ) : inactiveMembers.map(member => (
+                        <div key={member.id} className="flex items-center gap-3 p-2 rounded-lg bg-amber-50/50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900">
+                            {member.avatarUrl ? (
+                                <img src={member.avatarUrl} alt={member.name} className="h-7 w-7 rounded-full border flex-shrink-0" />
+                            ) : (
+                                <div className="h-7 w-7 rounded-full border flex-shrink-0 bg-muted flex items-center justify-center">
+                                    <span className="text-[10px] font-medium text-muted-foreground">
+                                        {member.name?.charAt(0)?.toUpperCase() || 'U'}
+                                    </span>
+                                </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                                <p className="text-xs font-medium truncate">{member.name}</p>
+                                <p className="text-xs text-muted-foreground truncate">{member.email}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Badge variant={member.type === 'Licensed' ? 'default' : 'outline'} className={`text-[10px] px-1 h-4 ${member.type === 'Licensed' ? 'bg-green-500 hover:bg-green-600' : ''}`}>
+                                    {member.type}
+                                </Badge>
+                                <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4 text-amber-600 flex-shrink-0 border-amber-200">
+                                    inactive
+                                </Badge>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Account Tab */}
+            {activeTab === 'account' && (
+                <div className="grid grid-cols-2 gap-3">
+                    {!account ? (
+                        <p className="text-xs text-muted-foreground col-span-2 text-center py-6">No account data available</p>
+                    ) : (
+                        <>
+                            <div className="bg-muted/50 rounded-lg p-3 col-span-2">
+                                <div className="flex items-center gap-1.5 mb-3">
+                                    <Building className="h-3 w-3 text-muted-foreground" />
+                                    <p className="text-xs font-medium">Zoom Account</p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Name</p>
+                                        <p className="text-sm font-medium">{account.accountName}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Plan</p>
+                                        <p className="text-sm font-medium">{account.plan}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Licensed Users</p>
+                                        <p className="text-sm font-medium">{account.licensedUsers}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Basic Users</p>
+                                        <p className="text-sm font-medium">{account.basicUsers}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
 export const Integrations = () => {
     const [integrations, setIntegrations] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -896,7 +1107,7 @@ export const Integrations = () => {
     };
 
     // Platforms that have a detail panel
-    const EXPANDABLE_PLATFORMS = ['github', 'slack', 'google-workspace', 'dropbox'];
+    const EXPANDABLE_PLATFORMS = ['github', 'slack', 'google-workspace', 'dropbox', 'zoom'];
 
     const getPlatformMeta = (name: string) => ALL_PLATFORMS.find(p => p.name.toLowerCase() === name.toLowerCase()) || { icon: <Plug className="h-5 w-5" strokeWidth={1.5} />, desc: 'Sync platform data', name };
     const connectedNames = integrations.filter(i => i.status === 'connected').map(i => i.platform.toLowerCase());
@@ -951,6 +1162,7 @@ export const Integrations = () => {
                                                         {integration.platform.toLowerCase() === 'slack' && <SlackDataPanel />}
                                                         {integration.platform.toLowerCase() === 'google-workspace' && <GoogleWorkspaceDataPanel />}
                                                         {integration.platform.toLowerCase() === 'dropbox' && <DropboxDataPanel />}
+                                                        {integration.platform.toLowerCase() === 'zoom' && <ZoomDataPanel />}
                                                     </>
                                                 )}
                                             </CardContent>

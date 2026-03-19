@@ -8,18 +8,25 @@ export const createLicenseSchema = z.object({
     seats_purchased: z.number().int().min(0),
     seats_used: z.number().int().min(0).default(0),
     cost_per_seat: z.number().min(0),
-    billing_cycle: z.enum(['monthly', 'annual']),
+    billing_cycle: z.enum(['monthly', 'annual', 'quarterly', 'one-time']),
     renewal_date: z.string().optional(), // ISO date string
 });
 
 export const updateLicenseSchema = z.object({
     platform: z.string().min(1).optional(),
     plan_name: z.string().min(1).optional(),
+    name: z.string().min(1).optional(),
     seats_purchased: z.number().int().min(0).optional(),
     seats_used: z.number().int().min(0).optional(),
     cost_per_seat: z.number().min(0).optional(),
-    billing_cycle: z.enum(['monthly', 'annual']).optional(),
+    billing_cycle: z.enum(['monthly', 'annual', 'quarterly', 'one-time']).optional(),
     renewal_date: z.string().optional(),
+    vendor: z.string().optional(),
+    category: z.string().optional(),
+    license_type: z.string().optional(),
+    purchase_date: z.string().optional(),
+    description: z.string().optional(),
+    is_manual: z.boolean().optional(),
 });
 
 // ── Organization / Settings Schemas ──
@@ -72,7 +79,7 @@ export const alertFilterSchema = z.object({
 
 export const licenseFilterSchema = z.object({
     platform: z.string().optional(),
-    billing_cycle: z.enum(['monthly', 'annual']).optional(),
+    billing_cycle: z.enum(['monthly', 'annual', 'quarterly', 'one-time']).optional(),
     page: z.coerce.number().int().min(1).default(1),
     limit: z.coerce.number().int().min(1).max(100).default(25),
 });
