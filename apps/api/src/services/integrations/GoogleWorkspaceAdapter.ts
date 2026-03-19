@@ -19,7 +19,12 @@ export class GoogleWorkspaceAdapter implements IntegrationAdapter {
     private clientSecret = process.env.GOOGLE_CLIENT_SECRET || '';
 
     getAuthUrl(state: string, redirectUri: string): string {
-        return `https://accounts.google.com/o/oauth2/v2/auth?client_id=${this.clientId}&redirect_uri=${redirectUri}&response_type=code&state=${state}&scope=https://www.googleapis.com/auth/admin.directory.user.readonly https://www.googleapis.com/auth/admin.directory.domain.readonly&access_type=offline&prompt=consent`;
+        const scope = [
+            'https://www.googleapis.com/auth/admin.directory.user.readonly',
+            'https://www.googleapis.com/auth/admin.directory.domain.readonly'
+        ].join('%20');
+
+        return `https://accounts.google.com/o/oauth2/v2/auth?client_id=${this.clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&state=${state}&scope=${scope}&access_type=offline&prompt=consent`;
     }
 
     async authenticate(credentials: OAuthCredentials, redirectUri: string): Promise<AuthResult> {
@@ -32,14 +37,14 @@ export class GoogleWorkspaceAdapter implements IntegrationAdapter {
                 grant_type: 'authorization_code'
             }
         });
-        
+
         const data = response.data;
 
         return {
             accessToken: data.access_token,
-            metadata: { 
-                refreshToken: data.refresh_token, 
-                tokenType: data.token_type 
+            metadata: {
+                refreshToken: data.refresh_token,
+                tokenType: data.token_type
             }
         };
     }
@@ -134,7 +139,7 @@ export class GoogleWorkspaceAdapter implements IntegrationAdapter {
     async fetchDomainInfo(accessToken: string): Promise<any> {
         const data = await this.getDomainInfo(accessToken);
         const users = await this.getUsersList(accessToken);
-        
+
         if (!data.domains || data.domains.length === 0) {
             throw new Error('No domains found for Google Workspace');
         }
