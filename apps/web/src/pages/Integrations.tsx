@@ -253,6 +253,7 @@ export const Integrations = () => {
     const fetchIntegrations = async () => {
         try {
             const data = await api.get('/api/integrations');
+            console.log('Integrations API response:', data); // ADD THIS
             if (data && data.integrations) setIntegrations(data.integrations);
         } catch (error) {
             console.error('Error fetching integrations:', error);
