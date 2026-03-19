@@ -83,7 +83,7 @@ router.get('/:platform/callback', async (req, res) => {
         try {
             await syncIntegrationData(data.id);
         } catch (syncErr) {
-            console.error('Initial sync failed but connection saved:', syncErr);
+            console.error('Initial sync failed:', syncErr);
         }
 
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';

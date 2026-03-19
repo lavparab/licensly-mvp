@@ -20,9 +20,10 @@ export async function syncIntegrationData(integrationId: string) {
         const adapter = integrationManager.getAdapter(integration.platform);
 
         // In real app, decrypt credentials. For MVP demo, pass empty string or mock
-        const token = typeof integration.credentials_encrypted === 'string'
-            ? integration.credentials_encrypted
-            : 'mock-token';
+        const credentials = JSON.parse(integration.credentials_encrypted as string);
+        const token = credentials.accessToken;
+
+        if (!token) throw new Error('No access token found in credentials');
 
         // 2. Fetch fresh data from platform
         const licenses = await adapter.fetchLicenses(token);
