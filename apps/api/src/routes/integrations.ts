@@ -80,7 +80,11 @@ router.get('/:platform/callback', async (req, res) => {
         // Trigger initial sync here
         // We do not strictly await the entire sync before returning to provide a snappier front-end experience.
         // But for MVP, awaiting it ensures the user sees the data immediately.
-        await syncIntegrationData(data.id);
+        try {
+            await syncIntegrationData(data.id);
+        } catch (syncErr) {
+            console.error('Initial sync failed but connection saved:', syncErr);
+        }
 
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
         res.redirect(`${frontendUrl}/integrations?success=true&platform=${encodeURIComponent(platform)}`);

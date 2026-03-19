@@ -70,6 +70,8 @@ async function getGithubToken(orgId: string) {
 
     if (error || !integration) throw new Error('GitHub integration not found');
     const credentials = JSON.parse(integration.credentials_encrypted as string);
+    console.log('Stored credentials keys:', Object.keys(credentials)); // ADD THIS
+    console.log('Access token value:', credentials.accessToken ? 'EXISTS' : 'MISSING'); // ADD THIS
     return credentials.accessToken;
 }
 
