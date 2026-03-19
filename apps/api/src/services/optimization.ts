@@ -64,7 +64,7 @@ ${JSON.stringify(licenseSummary, null, 2)}
 
         // 3. Call Gemini
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-preview-04-17',
+            model: 'gemini-2.5-flash',
             contents: prompt,
             config: {
                 temperature: 0.1, // Keep it factual and deterministic
