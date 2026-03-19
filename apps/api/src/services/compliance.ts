@@ -1,4 +1,4 @@
-{import { supabase } from '../utils/supabase';
+import { supabase } from '../utils/supabase';
 
 // Helper to calculate days between dates
 const daysBetween = (d1: Date, d2: Date) => {
