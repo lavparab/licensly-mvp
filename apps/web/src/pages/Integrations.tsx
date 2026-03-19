@@ -3,7 +3,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription }
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
-import { Unplug, CheckCircle2, RotateCw, AlertCircle, Loader2, Link2Off, Plug, Users, UserX, Bot, GitCommit, GitPullRequest, Eye, Activity, ChevronDown, ChevronUp } from 'lucide-react';
+import { Unplug, CheckCircle2, RotateCw, AlertCircle, Loader2, Link2Off, Plug, Users, UserX, Bot, GitCommit, GitPullRequest, Eye, Activity, ChevronDown, ChevronUp, Building } from 'lucide-react';
 import { api } from '../lib/api';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
@@ -225,6 +225,189 @@ function GithubDataPanel() {
                 </div>
             )}
         </div>
+    ); // end of GithubDataPanel
+
+
+} interface SlackMember {
+    id: string;
+    name: string;
+    realName: string;
+    email: string;
+    isAdmin: boolean;
+    isOwner: boolean;
+    status: 'active' | 'inactive';
+    lastActiveAt: string;
+    avatarUrl: string;
+}
+
+interface WorkspaceInfo {
+    id: string;
+    name: string;
+    plan: string;
+    domain: string;
+}
+
+function SlackDataPanel() {
+    const [members, setMembers] = useState<SlackMember[]>([]);
+    const [inactiveMembers, setInactiveMembers] = useState<SlackMember[]>([]);
+    const [workspace, setWorkspace] = useState<WorkspaceInfo | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState<'members' | 'inactive' | 'workspace'>('members');
+
+    useEffect(() => {
+        Promise.all([
+            api.get('/api/integrations/slack/members'),
+            api.get('/api/integrations/slack/inactive'),
+            api.get('/api/integrations/slack/workspace'),
+        ]).then(([membersRes, inactiveRes, workspaceRes]) => {
+            setMembers(membersRes.members || []);
+            setInactiveMembers(inactiveRes.inactiveMembers || []);
+            setWorkspace(workspaceRes.team || null);
+        }).catch(err => {
+            toast.error('Failed to load Slack data: ' + err.message);
+        }).finally(() => setLoading(false));
+    }, []);
+
+    const tabs = [
+        { id: 'members' as const, label: 'Members', icon: Users, count: members.length },
+        { id: 'inactive' as const, label: 'Inactive', icon: UserX, count: inactiveMembers.length },
+        { id: 'workspace' as const, label: 'Workspace', icon: Building, count: null },
+    ];
+
+    if (loading) return (
+        <div className="flex justify-center items-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+    );
+
+    return (
+        <div className="mt-4 border-t pt-4">
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3">
+                    <Users className="h-4 w-4 text-blue-500" />
+                    <div>
+                        <p className="text-lg font-bold leading-none">{members.length}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Members</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-950/30 rounded-lg p-3">
+                    <UserX className="h-4 w-4 text-amber-500" />
+                    <div>
+                        <p className="text-lg font-bold leading-none">{inactiveMembers.length}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Inactive</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2 bg-green-50 dark:bg-green-950/30 rounded-lg p-3">
+                    <Building className="h-4 w-4 text-green-500" />
+                    <div>
+                        <p className="text-lg font-bold leading-none truncate">{workspace?.plan || '—'}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Plan</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex gap-1 border-b mb-3">
+                {tabs.map(tab => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border-b-2 transition-colors ${activeTab === tab.id
+                            ? 'border-primary text-primary'
+                            : 'border-transparent text-muted-foreground hover:text-foreground'
+                            }`}
+                    >
+                        <tab.icon className="h-3 w-3" />
+                        {tab.label}
+                        {tab.count !== null && (
+                            <Badge variant="secondary" className="text-xs px-1 py-0 h-4">{tab.count}</Badge>
+                        )}
+                    </button>
+                ))}
+            </div>
+
+            {/* Members Tab */}
+            {activeTab === 'members' && (
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                    {members.length === 0 ? (
+                        <p className="text-xs text-muted-foreground text-center py-6">No members found</p>
+                    ) : members.map(member => (
+                        <div key={member.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                            <img src={member.avatarUrl} alt={member.realName} className="h-7 w-7 rounded-full border flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                    <p className="text-xs font-medium truncate">{member.realName}</p>
+                                    {member.isOwner && <Badge variant="default" className="text-xs px-1 py-0 h-4 flex-shrink-0">Owner</Badge>}
+                                    {member.isAdmin && !member.isOwner && <Badge variant="secondary" className="text-xs px-1 py-0 h-4 flex-shrink-0">Admin</Badge>}
+                                </div>
+                                <p className="text-xs text-muted-foreground truncate">{member.email}</p>
+                            </div>
+                            <Badge variant={member.status === 'active' ? 'default' : 'secondary'} className="text-xs px-1 py-0 h-4 flex-shrink-0">
+                                {member.status}
+                            </Badge>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Inactive Tab */}
+            {activeTab === 'inactive' && (
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                    {inactiveMembers.length === 0 ? (
+                        <div className="text-center py-6">
+                            <p className="text-xs font-medium">No inactive members 🎉</p>
+                            <p className="text-xs text-muted-foreground mt-1">All members are currently active</p>
+                        </div>
+                    ) : inactiveMembers.map(member => (
+                        <div key={member.id} className="flex items-center gap-3 p-2 rounded-lg bg-amber-50/50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900">
+                            <img src={member.avatarUrl} alt={member.realName} className="h-7 w-7 rounded-full border flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                                <p className="text-xs font-medium truncate">{member.realName}</p>
+                                <p className="text-xs text-muted-foreground truncate">{member.email}</p>
+                            </div>
+                            <Badge variant="secondary" className="text-xs px-1 py-0 h-4 text-amber-600 flex-shrink-0">inactive</Badge>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Workspace Tab */}
+            {activeTab === 'workspace' && (
+                <div className="grid grid-cols-2 gap-3">
+                    {!workspace ? (
+                        <p className="text-xs text-muted-foreground col-span-2 text-center py-6">No workspace data available</p>
+                    ) : (
+                        <>
+                            <div className="bg-muted/50 rounded-lg p-3 col-span-2">
+                                <div className="flex items-center gap-1.5 mb-3">
+                                    <Building className="h-3 w-3 text-muted-foreground" />
+                                    <p className="text-xs font-medium">Workspace Info</p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Name</p>
+                                        <p className="text-sm font-medium">{workspace.name}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Domain</p>
+                                        <p className="text-sm font-medium">{workspace.domain}.slack.com</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Plan</p>
+                                        <p className="text-sm font-medium capitalize">{workspace.plan}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Total Members</p>
+                                        <p className="text-sm font-medium">{members.length}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
+            )}
+        </div>
     );
 }
 
@@ -253,7 +436,6 @@ export const Integrations = () => {
     const fetchIntegrations = async () => {
         try {
             const data = await api.get('/api/integrations');
-            console.log('Integrations API response:', data); // ADD THIS
             if (data && data.integrations) setIntegrations(data.integrations);
         } catch (error) {
             console.error('Error fetching integrations:', error);
@@ -319,7 +501,7 @@ export const Integrations = () => {
     };
 
     // Platforms that have a detail panel
-    const EXPANDABLE_PLATFORMS = ['github'];
+    const EXPANDABLE_PLATFORMS = ['github', 'slack'];
 
     const getPlatformMeta = (name: string) => ALL_PLATFORMS.find(p => p.name.toLowerCase() === name.toLowerCase()) || { icon: '🔌', desc: 'Sync platform data', name };
     const connectedNames = integrations.filter(i => i.status === 'connected').map(i => i.platform.toLowerCase());
@@ -347,7 +529,6 @@ export const Integrations = () => {
                             </h2>
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
                                 {integrations.filter(i => i.status === 'connected').map(integration => {
-                                    console.log('Platform name from DB:', integration.platform); // ADD THIS
                                     const meta = getPlatformMeta(integration.platform);
                                     const isExpandable = EXPANDABLE_PLATFORMS.includes(integration.platform.toLowerCase());
                                     const isExpanded = expandedPlatforms.has(integration.platform.toLowerCase());
@@ -370,7 +551,10 @@ export const Integrations = () => {
                                                 </div>
                                                 {/* Expandable detail panel */}
                                                 {isExpandable && isExpanded && (
-                                                    integration.platform.toLowerCase() === 'github' && <GithubDataPanel />
+                                                    <>
+                                                        {integration.platform.toLowerCase() === 'github' && <GithubDataPanel />}
+                                                        {integration.platform.toLowerCase() === 'slack' && <SlackDataPanel />}
+                                                    </>
                                                 )}
                                             </CardContent>
                                             <CardFooter className="pt-2 border-t">

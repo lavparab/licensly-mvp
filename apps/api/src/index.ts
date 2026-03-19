@@ -10,6 +10,7 @@ dotenv.config();
 
 // Route imports
 import githubIntegrationRoutes from './routes/github';
+import slackIntegrationRoutes from './routes/slack';
 import integrationRoutes from './routes/integrations';
 import aiRoutes from './routes/ai';
 import reportsRoutes from './routes/reports';
@@ -65,6 +66,7 @@ app.get('/health', (_req, res) => {
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/licenses', licensesRoutes);
 app.use('/api/integrations/github', githubIntegrationRoutes);
+app.use('/api/integrations/slack', slackIntegrationRoutes);
 app.use('/api/integrations', integrationRoutes);
 app.use('/api/compliance', complianceRoutes);
 app.use('/api/settings', settingsRoutes);
