@@ -111,14 +111,14 @@ export const Licenses = () => {
             </div>
 
             {licenses.length === 0 ? (
-                <Card className="flex flex-col items-center justify-center p-12 text-center border-dashed">
+                <Card className="flex flex-col items-center justify-center p-12 text-center border-dashed bg-white dark:bg-[#1a1a1a] dark:border-[#2a2a2a]">
                     <div className="bg-muted p-4 rounded-full mb-4"><FileX className="h-8 w-8 text-muted-foreground" /></div>
                     <CardTitle className="text-xl mb-2">No licenses tracked yet</CardTitle>
                     <CardDescription className="max-w-md mb-6">Connect integrations to auto-discover your licenses, or add them during onboarding.</CardDescription>
                     <Button onClick={() => navigate('/integrations')}>Connect Integrations</Button>
                 </Card>
             ) : (
-                <Card>
+                <Card className="bg-white dark:bg-[#1a1a1a] dark:border-[#2a2a2a]">
                     <CardHeader>
                         <div className="flex flex-col sm:flex-row gap-3">
                             <div className="relative flex-1">
