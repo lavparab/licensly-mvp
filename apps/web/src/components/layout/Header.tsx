@@ -58,7 +58,7 @@ export function Header() {
     };
 
     return (
-        <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6">
+        <header className="flex h-[52px] items-center gap-4 border-b border-[var(--border)] bg-[var(--bg-primary)] px-4 lg:px-6">
 
             {/* Mobile Sidebar Toggle */}
             <Sheet>
@@ -87,7 +87,7 @@ export function Header() {
                 {/* Notification Bell */}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="icon" className="rounded-full relative">
+                        <Button variant="outline" size="icon" className="relative rounded-[6px]">
                             <Bell className="h-4 w-4" />
                             {alerts.length > 0 && (
                                 <span className="absolute -top-1 -right-1 h-4 w-4 bg-destructive text-destructive-foreground text-[10px] rounded-full flex items-center justify-center font-bold">
@@ -135,7 +135,7 @@ export function Header() {
                 {/* User Menu */}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="secondary" size="icon" className="rounded-full">
+                        <Button variant="secondary" size="icon" className="rounded-[6px]">
                             <User className="h-5 w-5" />
                             <span className="sr-only">Toggle user menu</span>
                         </Button>

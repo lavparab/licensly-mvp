@@ -21,15 +21,15 @@ export function DashboardLayout() {
 
     return (
         <TooltipProvider>
-            <div className="grid min-h-screen w-full md:grid-cols-[256px_1fr]">
+            <div className="grid min-h-screen w-full md:grid-cols-[240px_1fr]">
                 {/* Desktop Sidebar */}
                 <Sidebar className="hidden md:flex" />
 
                 {/* Main Content Area */}
                 <div className="flex flex-col">
                     <Header />
-                    <main className="flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8 bg-muted/40 overflow-y-auto">
-                        <div className="mx-auto grid w-full max-w-6xl items-start gap-6 py-6">
+                    <main className="flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8 bg-[var(--bg-primary)] overflow-y-auto">
+                        <div className="mx-auto grid w-full max-w-6xl items-start gap-6 py-6 animate-fade-up">
                             <Outlet />
                         </div>
                     </main>

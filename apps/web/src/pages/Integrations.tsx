@@ -3,20 +3,20 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription }
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
-import { Unplug, CheckCircle2, RotateCw, AlertCircle, Loader2, Link2Off, Plug, Users, UserX, Bot, GitCommit, GitPullRequest, Eye, Activity, ChevronDown, ChevronUp, Building, Globe, HardDrive } from 'lucide-react';
+import { Unplug, CheckCircle2, RotateCw, AlertCircle, Loader2, Link2Off, Plug, Users, UserX, Bot, GitCommit, GitPullRequest, Eye, Activity, ChevronDown, ChevronUp, Building, Globe, HardDrive, MessageSquare, LayoutGrid, Palette, Video, Github, Brush, Mail } from 'lucide-react';
 import { api } from '../lib/api';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 
-const ALL_PLATFORMS = [
-    { name: 'Slack', icon: '💬', desc: 'Sync users and workspace data' },
-    { name: 'Microsoft Teams', icon: '👥', desc: 'O365 subscriptions and presence' },
-    { name: 'Google Workspace', icon: '📧', desc: 'Directory, licenses, and usage' },
-    { name: 'Microsoft 365', icon: '📊', desc: 'Office suite subscriptions' },
-    { name: 'Adobe Creative Cloud', icon: '🎨', desc: 'Entitlements and user groups' },
-    { name: 'Zoom', icon: '📹', desc: 'Pro plans and meeting usage' },
-    { name: 'GitHub', icon: '🐙', desc: 'Org members and billing seats' },
-    { name: 'Canva', icon: '🖌️', desc: 'Graphic design platform' },
+const ALL_PLATFORMS: { name: string; icon: React.ReactNode; desc: string }[] = [
+    { name: 'Slack', icon: <MessageSquare className="h-5 w-5" strokeWidth={1.5} />, desc: 'Sync users and workspace data' },
+    { name: 'Microsoft Teams', icon: <Users className="h-5 w-5" strokeWidth={1.5} />, desc: 'O365 subscriptions and presence' },
+    { name: 'Google Workspace', icon: <Mail className="h-5 w-5" strokeWidth={1.5} />, desc: 'Directory, licenses, and usage' },
+    { name: 'Microsoft 365', icon: <LayoutGrid className="h-5 w-5" strokeWidth={1.5} />, desc: 'Office suite subscriptions' },
+    { name: 'Adobe Creative Cloud', icon: <Palette className="h-5 w-5" strokeWidth={1.5} />, desc: 'Entitlements and user groups' },
+    { name: 'Zoom', icon: <Video className="h-5 w-5" strokeWidth={1.5} />, desc: 'Pro plans and meeting usage' },
+    { name: 'GitHub', icon: <Github className="h-5 w-5" strokeWidth={1.5} />, desc: 'Org members and billing seats' },
+    { name: 'Canva', icon: <Brush className="h-5 w-5" strokeWidth={1.5} />, desc: 'Graphic design platform' },
 ];
 
 interface Member {
@@ -898,7 +898,7 @@ export const Integrations = () => {
     // Platforms that have a detail panel
     const EXPANDABLE_PLATFORMS = ['github', 'slack', 'google-workspace', 'dropbox'];
 
-    const getPlatformMeta = (name: string) => ALL_PLATFORMS.find(p => p.name.toLowerCase() === name.toLowerCase()) || { icon: '🔌', desc: 'Sync platform data', name };
+    const getPlatformMeta = (name: string) => ALL_PLATFORMS.find(p => p.name.toLowerCase() === name.toLowerCase()) || { icon: <Plug className="h-5 w-5" strokeWidth={1.5} />, desc: 'Sync platform data', name };
     const connectedNames = integrations.filter(i => i.status === 'connected').map(i => i.platform.toLowerCase());
     const availablePlatforms = ALL_PLATFORMS.filter(p => !connectedNames.includes(p.name.toLowerCase()));
 
@@ -932,7 +932,7 @@ export const Integrations = () => {
                                         <Card key={integration.id} className="flex flex-col">
                                             <CardHeader className="flex flex-row items-center justify-between pb-2">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg border bg-muted text-xl">{meta.icon}</div>
+                                                    <div className="flex h-10 w-10 items-center justify-center rounded-[6px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)]">{meta.icon}</div>
                                                     <div>
                                                         <CardTitle className="text-base">{integration.platform}</CardTitle>
                                                         <CardDescription className="text-xs">{meta.desc}</CardDescription>
@@ -990,7 +990,7 @@ export const Integrations = () => {
                                     return (
                                         <Card key={integration.id} className="flex flex-col opacity-75">
                                             <CardHeader className="flex flex-row items-center gap-3 pb-2">
-                                                <div className="flex h-10 w-10 items-center justify-center rounded-lg border bg-muted text-xl">{meta.icon}</div>
+                                                <div className="flex h-10 w-10 items-center justify-center rounded-[6px] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)]">{meta.icon}</div>
                                                 <div>
                                                     <CardTitle className="text-base">{integration.platform}</CardTitle>
                                                     <CardDescription className="text-xs">{meta.desc}</CardDescription>
@@ -1018,7 +1018,7 @@ export const Integrations = () => {
                                 {availablePlatforms.map(p => (
                                     <Card key={p.name} className="flex flex-col border-dashed">
                                         <CardHeader className="flex flex-row items-center gap-3 pb-2">
-                                            <div className="flex h-10 w-10 items-center justify-center rounded-lg border bg-muted text-xl">{p.icon}</div>
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-[6px] border border-dashed border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)]">{p.icon}</div>
                                             <div>
                                                 <CardTitle className="text-base">{p.name}</CardTitle>
                                                 <CardDescription className="text-xs">{p.desc}</CardDescription>

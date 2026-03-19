@@ -33,33 +33,36 @@ export function Sidebar({ className }: { className?: string }) {
                 key={item.href}
                 to={item.href}
                 className={cn(
-                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all',
+                    'flex items-center gap-3 rounded-[6px] px-3 h-9 text-[13px] font-medium transition-all relative',
                     isActive
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                        ? 'bg-[var(--sidebar-active)] text-white before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-[2px] before:rounded-full before:bg-[#2563eb]'
+                        : 'text-[var(--sidebar-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-text)]'
                 )}
             >
-                <item.icon className="h-4 w-4" />
+                <item.icon className="h-[18px] w-[18px]" strokeWidth={1.5} />
                 {item.name}
             </Link>
         );
     };
 
     return (
-        <div className={cn('hidden h-screen w-64 flex-col border-r bg-card md:flex', className)}>
-            <div className="flex h-14 items-center border-b px-6">
-                <Link to="/" className="flex items-center gap-2 font-bold text-primary text-xl tracking-tight">
-                    <Key className="h-5 w-5" />
-                    <span>Licensly</span>
+        <div className={cn('hidden h-screen w-[240px] flex-col bg-[var(--sidebar-bg)] md:flex', className)}>
+            {/* Logo */}
+            <div className="flex h-14 items-center border-b border-[var(--sidebar-border)] px-5">
+                <Link to="/" className="flex items-center gap-2.5">
+                    <Key className="h-5 w-5 text-white" strokeWidth={1.5} />
+                    <span className="font-serif text-xl text-white tracking-tight">Licensly</span>
                 </Link>
             </div>
 
+            {/* Main Nav */}
             <div className="flex-1 overflow-auto py-4">
-                <nav className="grid gap-1 px-4">{navItems.map(renderLink)}</nav>
+                <nav className="grid gap-0.5 px-3">{navItems.map(renderLink)}</nav>
             </div>
 
-            <div className="border-t p-4">
-                <nav className="grid gap-1">{bottomNavItems.map(renderLink)}</nav>
+            {/* Bottom Nav */}
+            <div className="border-t border-[var(--sidebar-border)] p-3">
+                <nav className="grid gap-0.5">{bottomNavItems.map(renderLink)}</nav>
             </div>
         </div>
     );

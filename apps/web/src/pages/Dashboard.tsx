@@ -111,16 +111,16 @@ export const Dashboard = () => {
         <>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Dashboard Overview</h1>
-                    <p className="text-muted-foreground">Monitor your corporate SaaS licenses and identify savings.</p>
+                    <h1 className="font-serif text-[32px] tracking-tight text-[var(--text-primary)]">Dashboard</h1>
+                    <p className="text-[14px] text-[var(--text-muted)]">Monitor your corporate SaaS licenses and identify savings.</p>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={handleSyncNow} disabled={isSyncing}>
-                        <RotateCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                    <Button variant="outline" className="h-9 rounded-[6px] text-[13px]" onClick={handleSyncNow} disabled={isSyncing}>
+                        <RotateCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} strokeWidth={1.5} />
                         {isSyncing ? 'Syncing...' : 'Sync Now'}
                     </Button>
-                    <Button variant="outline" onClick={handleExportCSV}>
-                        <Download className="mr-2 h-4 w-4" />
+                    <Button variant="outline" className="h-9 rounded-[6px] text-[13px]" onClick={handleExportCSV}>
+                        <Download className="mr-2 h-4 w-4" strokeWidth={1.5} />
                         Export CSV
                     </Button>
                 </div>
@@ -128,48 +128,48 @@ export const Dashboard = () => {
 
             {/* Quick Stats Row */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
+                <Card className="border-t-2 border-t-[var(--accent)]">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Monthly Spend</CardTitle>
-                        <CreditCard className="h-4 w-4 text-muted-foreground" />
+                        <CardTitle className="text-[13px] font-sans font-medium text-[var(--text-muted)]">Total Monthly Spend</CardTitle>
+                        <CreditCard className="h-4 w-4 text-[var(--text-muted)]" strokeWidth={1.5} />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">${stats.totalSpend.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-                        <p className="text-xs text-muted-foreground mt-1">Based on active licenses</p>
+                        <div className="text-[24px] font-mono font-semibold text-[var(--text-primary)]">${stats.totalSpend.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                        <p className="text-[12px] text-[var(--text-muted)] mt-1">Based on active licenses</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="border-t-2 border-t-[var(--success)]">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Potential Savings</CardTitle>
-                        <Tag className="h-4 w-4 text-muted-foreground" />
+                        <CardTitle className="text-[13px] font-sans font-medium text-[var(--text-muted)]">Potential Savings</CardTitle>
+                        <Tag className="h-4 w-4 text-[var(--text-muted)]" strokeWidth={1.5} />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-green-600">${stats.savings.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-                        <p className="text-xs text-muted-foreground mt-1">From pending optimizations</p>
+                        <div className="text-[24px] font-mono font-semibold text-[var(--success)]">${stats.savings.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                        <p className="text-[12px] text-[var(--text-muted)] mt-1">From pending optimizations</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="border-t-2 border-t-[var(--accent)]">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Seat Licensing</CardTitle>
-                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <CardTitle className="text-[13px] font-sans font-medium text-[var(--text-muted)]">Seat Licensing</CardTitle>
+                        <Users className="h-4 w-4 text-[var(--text-muted)]" strokeWidth={1.5} />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats.activeSeats} / {stats.totalSeats}</div>
-                        <p className="text-xs text-muted-foreground mt-1">Used vs Purchased</p>
+                        <div className="text-[24px] font-mono font-semibold text-[var(--text-primary)]">{stats.activeSeats} / {stats.totalSeats}</div>
+                        <p className="text-[12px] text-[var(--text-muted)] mt-1">Used vs Purchased</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="border-t-2 border-t-[var(--warning)]">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Compliance Alerts</CardTitle>
-                        <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                        <CardTitle className="text-[13px] font-sans font-medium text-[var(--text-muted)]">Compliance Alerts</CardTitle>
+                        <AlertCircle className="h-4 w-4 text-[var(--text-muted)]" strokeWidth={1.5} />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold flex gap-2 items-center">
+                        <div className="flex gap-2 items-center">
                             {stats.criticalAlerts > 0 && <Badge variant="destructive">{stats.criticalAlerts} Critical</Badge>}
-                            {stats.warningAlerts > 0 && <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">{stats.warningAlerts} Warning</Badge>}
-                            {stats.criticalAlerts === 0 && stats.warningAlerts === 0 && <span className="text-muted-foreground text-sm font-normal">All clear</span>}
+                            {stats.warningAlerts > 0 && <Badge variant="secondary" className="bg-[var(--warning-light)] text-[var(--warning)] border-[var(--warning)]/20">{stats.warningAlerts} Warning</Badge>}
+                            {stats.criticalAlerts === 0 && stats.warningAlerts === 0 && <span className="text-[var(--text-muted)] text-[13px]">All clear</span>}
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">Active notifications</p>
+                        <p className="text-[12px] text-[var(--text-muted)] mt-1">Active notifications</p>
                     </CardContent>
                 </Card>
             </div>
@@ -183,14 +183,14 @@ export const Dashboard = () => {
                             {platformSpend.length > 0 ? (
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={platformSpend} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                                        <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                        <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`} />
-                                        <Tooltip cursor={{ fill: 'var(--muted)' }} contentStyle={{ borderRadius: '8px', border: '1px solid var(--border)' }} formatter={(v: number) => [`$${v}`, 'Spend']} />
-                                        <Bar dataKey="spend" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                                        <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                                        <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`} />
+                                        <Tooltip cursor={{ fill: 'var(--bg-secondary)' }} contentStyle={{ borderRadius: '6px', border: '1px solid var(--border)', fontFamily: 'DM Sans', fontSize: '13px' }} formatter={(v: number) => [`$${v}`, 'Spend']} />
+                                        <Bar dataKey="spend" fill="var(--accent)" radius={[4, 4, 0, 0]} />
                                     </BarChart>
                                 </ResponsiveContainer>
                             ) : (
-                                <div className="flex h-full items-center justify-center text-muted-foreground text-sm border-2 border-dashed rounded-md">
+                                <div className="flex h-full items-center justify-center text-[var(--text-muted)] text-[13px] border border-dashed border-[var(--border)] rounded-[6px]">
                                     <div className="text-center"><p>No spend data yet.</p><Button variant="link" className="mt-1" onClick={() => navigate('/integrations')}>Connect integrations</Button></div>
                                 </div>
                             )}
@@ -213,7 +213,7 @@ export const Dashboard = () => {
                                     </PieChart>
                                 </ResponsiveContainer>
                             ) : (
-                                <div className="flex h-full items-center justify-center text-muted-foreground text-sm border-2 border-dashed rounded-md">No seat data.</div>
+                                <div className="flex h-full items-center justify-center text-[var(--text-muted)] text-[13px] border border-dashed border-[var(--border)] rounded-[6px]">No seat data.</div>
                             )}
                         </div>
                     </CardContent>
@@ -227,16 +227,16 @@ export const Dashboard = () => {
                     <CardContent>
                         <div className="space-y-3">
                             {alerts.length > 0 ? alerts.map(alert => (
-                                <div key={alert.id} className="flex items-start gap-4 rounded-lg border p-3 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate('/compliance')}>
-                                    <AlertCircle className={`mt-0.5 h-5 w-5 ${alert.severity === 'critical' ? 'text-red-500' : alert.severity === 'warning' ? 'text-yellow-500' : 'text-blue-500'}`} />
+                                <div key={alert.id} className="flex items-start gap-4 rounded-[6px] border border-[var(--border)] p-3 cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors" onClick={() => navigate('/compliance')}>
+                                    <AlertCircle className={`mt-0.5 h-5 w-5 flex-shrink-0 ${alert.severity === 'critical' ? 'text-[var(--error)]' : alert.severity === 'warning' ? 'text-[var(--warning)]' : 'text-[var(--accent)]'}`} strokeWidth={1.5} />
                                     <div className="space-y-1 flex-1 min-w-0">
-                                        <p className="text-sm font-medium leading-none truncate">{alert.message}</p>
-                                        <p className="text-xs text-muted-foreground">{alert.alert_type} • {alert.severity}</p>
+                                        <p className="text-[13px] font-medium leading-none truncate">{alert.message}</p>
+                                        <p className="text-[12px] text-[var(--text-muted)]">{alert.alert_type} • {alert.severity}</p>
                                     </div>
-                                    <Badge variant="outline" className="text-xs shrink-0">{alert.severity}</Badge>
+                                    <Badge variant="outline" className="text-[11px] shrink-0">{alert.severity}</Badge>
                                 </div>
                             )) : (
-                                <div className="text-sm text-muted-foreground p-4 text-center border-dashed border-2 rounded-md">No recent alerts.</div>
+                                <div className="text-[13px] text-[var(--text-muted)] p-4 text-center border border-dashed border-[var(--border)] rounded-[6px]">No recent alerts.</div>
                             )}
                         </div>
                     </CardContent>
@@ -257,7 +257,7 @@ export const Dashboard = () => {
                                     </Badge>
                                 </div>
                             )) : (
-                                <div className="text-sm text-muted-foreground p-4 text-center border-dashed border-2 rounded-md">No renewals in the next 30 days.</div>
+                                <div className="text-[13px] text-[var(--text-muted)] p-4 text-center border border-dashed border-[var(--border)] rounded-[6px]">No renewals in the next 30 days.</div>
                             )}
                         </div>
                     </CardContent>
