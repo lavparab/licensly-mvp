@@ -21,14 +21,14 @@ export function DashboardLayout() {
 
     return (
         <TooltipProvider>
-            <div className="grid h-screen w-full md:grid-cols-[240px_1fr] overflow-hidden">
+            <div className="flex min-h-screen w-full">
                 {/* Desktop Sidebar */}
-                <Sidebar className="hidden md:flex" />
+                <Sidebar className="hidden md:flex fixed inset-y-0 left-0 z-20" />
 
                 {/* Main Content Area */}
-                <div className="flex flex-col h-full overflow-hidden">
+                <div className="flex flex-col w-full md:pl-[240px]">
                     <Header />
-                    <main className="flex-1 p-4 sm:px-6 md:gap-8 bg-[var(--bg-primary)] overflow-y-auto">
+                    <main className="flex-1 p-4 sm:px-6 md:gap-8 bg-[var(--bg-primary)]">
                         <div className="mx-auto grid w-full max-w-6xl items-start gap-6 py-6 animate-fade-up">
                             <Outlet />
                         </div>

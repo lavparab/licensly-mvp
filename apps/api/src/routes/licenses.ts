@@ -66,15 +66,44 @@ router.get('/:id', requireAuth, asyncHandler(async (req: AuthRequest, res) => {
 }));
 
 // POST /api/licenses — Create a manual license
-router.post('/', requireAuth, validate(createLicenseSchema), asyncHandler(async (req: AuthRequest, res) => {
+router.post('/', requireAuth, asyncHandler(async (req: AuthRequest, res) => {
     const orgId = req.orgId;
-    if (!orgId) return res.status(400).json({ error: 'Organization not found' });
+    const {
+        name,           // License Name
+        vendor,         // Vendor
+        category,       // Category
+        license_type,   // Per User / Site / Enterprise
+        seats_purchased,// Total Seats
+        seats_used,     // Used Seats
+        cost_per_seat,  // Cost Per Seat
+        billing_cycle,  // Monthly / Annual / One-time
+        purchase_date,  // Purchase Date
+        renewal_date,   // Renewal Date
+        description     // Optional notes
+    } = req.body;
 
-    const { data: license, error } = await supabase
+    // Validate required fields
+    if (!name || !vendor || !seats_purchased || typeof cost_per_seat === 'undefined' || !billing_cycle || !renewal_date) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const { data, error } = await supabase
         .from('licenses')
         .insert({
             org_id: orgId,
-            ...req.body,
+            platform: vendor.toLowerCase(),
+            plan_name: name,
+            seats_purchased: Number(seats_purchased),
+            seats_used: Number(seats_used) || 0,
+            cost_per_seat: Number(cost_per_seat),
+            billing_cycle,
+            renewal_date,
+            vendor,
+            category,
+            license_type,
+            purchase_date,
+            description,
+            is_manual: true
         })
         .select()
         .single();
@@ -87,11 +116,11 @@ router.post('/', requireAuth, validate(createLicenseSchema), asyncHandler(async 
         user_id: req.user?.id,
         action: 'license_created',
         entity_type: 'license',
-        entity_id: license.id,
-        metadata: { platform: req.body.platform, plan_name: req.body.plan_name },
+        entity_id: data.id,
+        metadata: { name, vendor, category, license_type, description }
     });
 
-    res.status(201).json({ license });
+    res.status(201).json({ license: data });
 }));
 
 // PATCH /api/licenses/:id — Update license details

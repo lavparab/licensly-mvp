@@ -58,7 +58,7 @@ export function Header() {
     };
 
     return (
-        <header className="flex h-[52px] shrink-0 items-center gap-4 border-b border-[var(--border)] bg-[var(--bg-primary)] px-4 lg:px-6">
+        <header className="sticky top-0 z-10 flex h-[52px] shrink-0 items-center gap-4 border-b border-[var(--border)] bg-[var(--bg-primary)] px-4 lg:px-6">
 
             {/* Mobile Sidebar Toggle */}
             <Sheet>

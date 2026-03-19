@@ -4,11 +4,12 @@ import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Badge } from '../components/ui/badge';
-import { Search, Download, Loader2, FileX, ArrowUpDown, Key } from 'lucide-react';
+import { Search, Download, Loader2, FileX, ArrowUpDown, Key, Plus } from 'lucide-react';
 import { api } from '../lib/api';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { AddLicenseModal } from '../components/AddLicenseModal';
 
 type SortField = 'platform' | 'seats_purchased' | 'cost_per_seat' | 'renewal_date' | 'utilization';
 type SortDir = 'asc' | 'desc';
@@ -22,6 +23,7 @@ export const Licenses = () => {
     const [platformFilter, setPlatformFilter] = useState('all');
     const [sortField, setSortField] = useState<SortField>('platform');
     const [sortDir, setSortDir] = useState<SortDir>('asc');
+    const [showAddModal, setShowAddModal] = useState(false);
 
     useEffect(() => {
         if (session) fetchLicenses();
@@ -98,9 +100,14 @@ export const Licenses = () => {
                     <h1 className="text-3xl font-bold tracking-tight">License Tracker</h1>
                     <p className="text-muted-foreground">Manage all your SaaS licenses in one place.</p>
                 </div>
-                <Button variant="outline" onClick={exportCSV}>
-                    <Download className="mr-2 h-4 w-4" /> Export CSV
-                </Button>
+                <div className="flex gap-2">
+                    <Button onClick={() => setShowAddModal(true)} className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white">
+                        <Plus className="mr-2 h-4 w-4" strokeWidth={2} /> Add License
+                    </Button>
+                    <Button variant="outline" onClick={exportCSV}>
+                        <Download className="mr-2 h-4 w-4" /> Export CSV
+                    </Button>
+                </div>
             </div>
 
             {licenses.length === 0 ? (
@@ -165,6 +172,15 @@ export const Licenses = () => {
                     </CardContent>
                 </Card>
             )}
+
+            <AddLicenseModal
+                open={showAddModal}
+                onClose={() => setShowAddModal(false)}
+                onSuccess={() => {
+                    setShowAddModal(false);
+                    fetchLicenses(); // refresh the list
+                }}
+            />
         </div>
     );
 };
