@@ -19,7 +19,7 @@ export const Compliance = () => {
     const fetchData = async () => {
         try {
             const [alertsResponse, licensesResponse] = await Promise.all([
-                api.get('/api/compliance/alerts?is_resolved=false&limit=50'),
+                api.get('/api/compliance/alerts?limit=50'),
                 api.get('/api/licenses?limit=10')
             ]);
 
