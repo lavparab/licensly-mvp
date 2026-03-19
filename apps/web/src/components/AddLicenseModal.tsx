@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { supabase } from '../lib/supabase';
 import {
     Dialog,
     DialogContent,
@@ -64,6 +65,8 @@ export function AddLicenseModal({ open, onClose, onSuccess }: AddLicenseModalPro
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log('Session before submit:', session?.access_token ? 'EXISTS' : 'NULL');
         setError('');
 
         // Client-side validations
