@@ -1,15 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Bell, Menu, User, Settings, LogOut, ChevronRight, Building, Check } from 'lucide-react';
+import { Bell, Menu, User, LogOut, ChevronRight, Building, Check } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useAuth } from '../../context/AuthContext';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '../ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { Sidebar } from './Sidebar';
 import { api } from '../../lib/api';
@@ -37,8 +30,23 @@ export function Header() {
 
     const [notifications, setNotifications] = useState<any[]>(demoNotifications);
     const [orgName, setOrgName] = useState('Acme Corp');
+    const [bellOpen, setBellOpen] = useState(false);
+    const [userOpen, setUserOpen] = useState(false);
+
+    const bellRef = useRef<HTMLDivElement>(null);
+    const userRef = useRef<HTMLDivElement>(null);
 
     const currentPage = PAGE_NAMES[location.pathname] || 'Dashboard';
+
+    // Close dropdowns when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (bellRef.current && !bellRef.current.contains(e.target as Node)) setBellOpen(false);
+            if (userRef.current && !userRef.current.contains(e.target as Node)) setUserOpen(false);
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     useEffect(() => {
         const loadOrg = async () => {
@@ -54,7 +62,6 @@ export function Header() {
             try {
                 const res = await api.get('/api/notifications');
                 if (res?.notifications?.length) setNotifications(res.notifications);
-
             } catch (e) {
                 // Ignore API error and persist demo state
             }
@@ -73,6 +80,7 @@ export function Header() {
     };
 
     const handleSignOut = async () => {
+        setUserOpen(false);
         await signOut();
         window.location.href = '/login';
     };
@@ -82,7 +90,7 @@ export function Header() {
     const userDisplayName = user?.user_metadata?.full_name || user?.email || 'User';
 
     return (
-        <header className="sticky top-0 z-10 flex h-[52px] shrink-0 items-center gap-4 border-b border-[var(--border)] bg-[var(--bg-primary)] px-4 lg:px-6">
+        <header className="sticky top-0 z-10 flex h-[52px] shrink-0 items-center gap-4 border-b border-gray-200 bg-white px-4 lg:px-6">
 
             {/* Mobile Sidebar Toggle */}
             <Sheet>
@@ -99,101 +107,108 @@ export function Header() {
 
             {/* Breadcrumb */}
             <div className="w-full flex-1 flex items-center gap-2">
-                <Link to="/dashboard" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
+                <Link to="/dashboard" className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
                     Home
                 </Link>
-                <ChevronRight className="h-3 w-3 text-[var(--text-muted)]" />
-                <span className="text-sm font-medium text-[var(--text-primary)]">{currentPage}</span>
+                <ChevronRight className="h-3 w-3 text-gray-400" />
+                <span className="text-sm font-medium text-gray-900">{currentPage}</span>
             </div>
 
             <div className="flex items-center gap-2 md:ml-auto">
 
                 {/* Notification Bell */}
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="icon" className="relative rounded-[6px] h-9 w-9">
-                            <Bell className="h-[18px] w-[18px] text-[var(--text-secondary)]" />
-                            {unreadCount > 0 && (
-                                <span className="absolute -top-1.5 -right-1.5 h-4 min-w-4 px-1 bg-destructive text-destructive-foreground text-[10px] rounded-full flex items-center justify-center font-bold shadow-sm">
-                                    {unreadCount}
-                                </span>
-                            )}
-                            <span className="sr-only">Notifications</span>
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                        align="end"
-                        className="z-[9999] w-[360px] max-h-[400px] overflow-y-auto p-0 rounded-[8px] border border-gray-200 shadow-lg bg-white"
+                <div className="relative" ref={bellRef}>
+                    <button
+                        onClick={() => { setBellOpen(!bellOpen); setUserOpen(false); }}
+                        className="relative flex items-center justify-center h-9 w-9 rounded-md border border-gray-200 bg-white hover:bg-gray-50 transition-colors"
                     >
-                        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] sticky top-0 bg-[var(--bg-primary)] z-10">
-                            <span className="font-semibold text-[14px] text-[var(--text-primary)]">Notifications</span>
-                            {unreadCount > 0 && (
-                                <button onClick={markAllRead} className="text-[12px] text-[var(--accent)] hover:underline flex items-center gap-1 font-medium">
-                                    <Check className="h-3 w-3" /> Mark all as read
-                                </button>
-                            )}
-                        </div>
-                        <div className="flex flex-col">
-                            {notifications.length > 0 ? (
-                                notifications.map(notif => (
-                                    <DropdownMenuItem
+                        <Bell className="h-[18px] w-[18px] text-gray-600" />
+                        {unreadCount > 0 && (
+                            <span className="absolute -top-1.5 -right-1.5 h-4 min-w-4 px-1 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold">
+                                {unreadCount}
+                            </span>
+                        )}
+                    </button>
+
+                    {bellOpen && (
+                        <div className="absolute right-0 top-11 w-[360px] max-h-[400px] overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-xl z-[9999]">
+                            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 sticky top-0 bg-white">
+                                <span className="font-semibold text-sm text-gray-900">Notifications</span>
+                                {unreadCount > 0 && (
+                                    <button
+                                        onClick={markAllRead}
+                                        className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+                                    >
+                                        <Check className="h-3 w-3" /> Mark all as read
+                                    </button>
+                                )}
+                            </div>
+                            <div className="flex flex-col">
+                                {notifications.length > 0 ? notifications.map(notif => (
+                                    <div
                                         key={notif.id}
-                                        className={`cursor-pointer flex items-start gap-3 px-4 py-3.5 rounded-none border-b border-[var(--border)] last:border-0 ${!notif.read ? 'bg-blue-50/40 hover:bg-blue-50/60' : 'hover:bg-[var(--bg-secondary)]'}`}
-                                        onSelect={(e) => { e.preventDefault(); markRead(notif.id); }}
+                                        onClick={() => markRead(notif.id)}
+                                        className={`flex items-start gap-3 px-4 py-3.5 border-b border-gray-50 cursor-pointer last:border-0 transition-colors ${!notif.read ? 'bg-blue-50/50 hover:bg-blue-50' : 'hover:bg-gray-50'}`}
                                     >
                                         <div className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${notif.type === 'success' ? 'bg-green-500' : notif.type === 'warning' ? 'bg-amber-500' : 'bg-blue-500'}`} />
                                         <div className="flex flex-col gap-0.5 w-full">
-                                            <div className="flex justify-between items-start w-full gap-2">
-                                                <span className={`text-[13px] text-[var(--text-primary)] ${!notif.read ? 'font-semibold' : 'font-medium'}`}>{notif.title}</span>
-                                                <span className="text-[11px] text-[var(--text-muted)] whitespace-nowrap pt-0.5">{notif.time}</span>
+                                            <div className="flex justify-between items-start gap-2">
+                                                <span className={`text-[13px] text-gray-900 ${!notif.read ? 'font-semibold' : 'font-medium'}`}>{notif.title}</span>
+                                                <span className="text-[11px] text-gray-400 whitespace-nowrap pt-0.5">{notif.time}</span>
                                             </div>
-                                            <span className="text-[12px] text-[var(--text-muted)] line-clamp-2 leading-relaxed pr-2">{notif.message}</span>
+                                            <span className="text-[12px] text-gray-500 line-clamp-2">{notif.message}</span>
                                         </div>
-                                    </DropdownMenuItem>
-                                ))
-                            ) : (
-                                <div className="p-8 text-sm text-center text-[var(--text-muted)]">
-                                    No new notifications
-                                </div>
-                            )}
+                                    </div>
+                                )) : (
+                                    <div className="p-8 text-sm text-center text-gray-400">
+                                        No new notifications
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                    )}
+                </div>
 
                 {/* User Menu */}
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="secondary" size="icon" className="rounded-full h-8 w-8 ml-1 bg-[var(--bg-tertiary)] border border-[var(--border)] shadow-sm hover:shadow transition-shadow">
-                            <span className="text-[13px] font-medium text-[var(--text-primary)]">
-                                {userInitials}
-                            </span>
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                        align="end"
-                        className="z-[9999] w-[220px] rounded-[8px] p-0 border border-gray-200 shadow-lg bg-white"
+                <div className="relative ml-1" ref={userRef}>
+                    <button
+                        onClick={() => { setUserOpen(!userOpen); setBellOpen(false); }}
+                        className="flex items-center justify-center h-8 w-8 rounded-full bg-gray-100 border border-gray-200 hover:bg-gray-200 transition-colors"
                     >
-                        <div className="px-4 py-3 flex flex-col gap-0.5 border-b border-[var(--border)] bg-[var(--bg-secondary)] rounded-t-[7px]">
-                            <span className="font-semibold text-[14px] text-[var(--text-primary)] truncate">{userDisplayName}</span>
-                            <span className="text-[12px] text-[var(--text-muted)] truncate">{orgName}</span>
+                        <span className="text-[13px] font-medium text-gray-700">{userInitials}</span>
+                    </button>
+
+                    {userOpen && (
+                        <div className="absolute right-0 top-10 w-[220px] bg-white border border-gray-200 rounded-lg shadow-xl z-[9999]">
+                            <div className="px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-lg">
+                                <p className="font-semibold text-[14px] text-gray-900 truncate">{userDisplayName}</p>
+                                <p className="text-[12px] text-gray-500 truncate">{orgName}</p>
+                            </div>
+                            <div className="p-1">
+                                <button
+                                    onClick={() => { setUserOpen(false); navigate('/settings'); }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] text-gray-700 hover:bg-gray-50 rounded-md transition-colors text-left"
+                                >
+                                    <User className="h-4 w-4 text-gray-500 shrink-0" /> Profile Settings
+                                </button>
+                                <button
+                                    onClick={() => { setUserOpen(false); navigate('/settings'); }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] text-gray-700 hover:bg-gray-50 rounded-md transition-colors text-left"
+                                >
+                                    <Building className="h-4 w-4 text-gray-500 shrink-0" /> Organization
+                                </button>
+                                <div className="my-1 border-t border-gray-100" />
+                                <button
+                                    onClick={handleSignOut}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] text-red-600 hover:bg-red-50 rounded-md transition-colors text-left"
+                                >
+                                    <LogOut className="h-4 w-4 shrink-0" /> Log out
+                                </button>
+                            </div>
                         </div>
-                        <div className="p-1">
-                            <DropdownMenuItem className="cursor-pointer text-[13px] px-3 py-2 rounded-[4px] hover:bg-[var(--bg-secondary)]" onSelect={() => navigate('/settings')}>
-                                <User className="mr-2.5 h-4 w-4 text-[var(--text-secondary)]" /> Profile Settings
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer text-[13px] px-3 py-2 rounded-[4px] hover:bg-[var(--bg-secondary)]" onSelect={() => navigate('/settings')}>
-                                <Building className="mr-2.5 h-4 w-4 text-[var(--text-secondary)]" /> Organization
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator className="my-1 border-[var(--border)]" />
-                            <DropdownMenuItem
-                                onSelect={handleSignOut}
-                                className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer text-[13px] px-3 py-2 rounded-[4px]"
-                            >
-                                <LogOut className="mr-2.5 h-4 w-4" /> Log out
-                            </DropdownMenuItem>
-                        </div>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                    )}
+                </div>
+
             </div>
         </header>
     );
