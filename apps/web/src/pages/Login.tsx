@@ -10,8 +10,8 @@ export const Login = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { session, isLoading: authLoading } = useAuth();
-    const [email, setEmail] = useState('admin@acmecorp.com');
-    const [password, setPassword] = useState('password123');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -113,6 +113,7 @@ export const Login = () => {
                             <input
                                 id="email"
                                 type="email"
+                                autoComplete="email"
                                 className="flex h-10 w-full rounded-[6px] border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-1 text-[14px] transition-all outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
                                 placeholder="m@example.com"
                                 value={email}
@@ -125,6 +126,7 @@ export const Login = () => {
                             <input
                                 id="password"
                                 type="password"
+                                autoComplete="current-password"
                                 className="flex h-10 w-full rounded-[6px] border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-1 text-[14px] transition-all outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
@@ -147,7 +149,7 @@ export const Login = () => {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3">
                             <Button type="button" variant="outline" className="h-10 rounded-[6px] text-[14px]" onClick={() => handleOAuthLogin('google')}>
                                 <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -156,16 +158,6 @@ export const Login = () => {
                                     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                                 </svg>
                                 Google
-                            </Button>
-                            <Button type="button" variant="outline" className="h-10 rounded-[6px] text-[14px]" onClick={() => handleOAuthLogin('azure')}>
-                                <svg className="mr-2 h-4 w-4" viewBox="0 0 23 23" xmlns="http://www.w3.org/2000/svg">
-                                    <path fill="#f3f3f3" d="M0 0h23v23H0z"/>
-                                    <path fill="#f35325" d="M1 1h10v10H1z"/>
-                                    <path fill="#81bc06" d="M12 1h10v10H12z"/>
-                                    <path fill="#05a6f0" d="M1 12h10v10H1z"/>
-                                    <path fill="#ffba08" d="M12 12h10v10H12z"/>
-                                </svg>
-                                Microsoft
                             </Button>
                         </div>
                     </form>

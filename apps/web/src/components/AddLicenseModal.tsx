@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { supabase } from '../lib/supabase';
@@ -24,13 +24,14 @@ interface AddLicenseModalProps {
     open: boolean;
     onClose: () => void;
     onSuccess: () => void;
+    initialData?: any;
 }
 
 const CATEGORIES = ['Productivity', 'Development', 'Design', 'Security', 'Communication', 'Analytics', 'Infrastructure', 'Other'];
 const LICENSE_TYPES = ['Per User', 'Site License', 'Enterprise', 'Open Source', 'Freemium'];
 const BILLING_CYCLES = ['Monthly', 'Annual', 'Quarterly', 'One-time'];
 
-export function AddLicenseModal({ open, onClose, onSuccess }: AddLicenseModalProps) {
+export function AddLicenseModal({ open, onClose, onSuccess, initialData }: AddLicenseModalProps) {
     const defaultForm = {
         name: '',
         vendor: '',
@@ -48,6 +49,22 @@ export function AddLicenseModal({ open, onClose, onSuccess }: AddLicenseModalPro
     const [formData, setFormData] = useState(defaultForm);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
+
+    useEffect(() => {
+        if (open) {
+            if (initialData) {
+                // Ensure dates are formatted correctly for input type="date"
+                setFormData({
+                    ...defaultForm,
+                    ...initialData,
+                    purchase_date: initialData.purchase_date ? new Date(initialData.purchase_date).toISOString().split('T')[0] : '',
+                    renewal_date: initialData.renewal_date ? new Date(initialData.renewal_date).toISOString().split('T')[0] : '',
+                });
+            } else {
+                setFormData(defaultForm);
+            }
+        }
+    }, [initialData, open]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -94,13 +111,18 @@ export function AddLicenseModal({ open, onClose, onSuccess }: AddLicenseModalPro
 
         try {
             setIsSubmitting(true);
-            await api.post('/api/licenses', formData);
-            toast.success('License added successfully');
+            if (initialData?.id) {
+                await api.patch(`/api/licenses/${initialData.id}`, formData);
+                toast.success('License updated successfully');
+            } else {
+                await api.post('/api/licenses', formData);
+                toast.success('License added successfully');
+            }
             setFormData(defaultForm);
             onSuccess();
         } catch (err: any) {
-            setError(err.message || 'Failed to create license');
-            toast.error(err.message || 'Failed to create license');
+            setError(err.message || (initialData?.id ? 'Failed to update license' : 'Failed to create license'));
+            toast.error(err.message || (initialData?.id ? 'Failed to update license' : 'Failed to create license'));
         } finally {
             setIsSubmitting(false);
         }
@@ -111,7 +133,9 @@ export function AddLicenseModal({ open, onClose, onSuccess }: AddLicenseModalPro
             <DialogContent className="sm:max-w-[600px] p-6">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader className="mb-4">
-                        <DialogTitle className="font-sans font-semibold text-[24px] tracking-tight">Add New License</DialogTitle>
+                        <DialogTitle className="font-sans font-semibold text-[24px] tracking-tight">
+                            {initialData ? 'Edit License' : 'Add New License'}
+                        </DialogTitle>
                     </DialogHeader>
 
                     {error && (
@@ -275,7 +299,7 @@ export function AddLicenseModal({ open, onClose, onSuccess }: AddLicenseModalPro
                             Cancel
                         </Button>
                         <Button type="submit" disabled={isSubmitting} className="rounded-[6px] h-9 text-[13px] bg-[#2563eb] hover:bg-[#1d4ed8] text-white border border-[#1d4ed8]">
-                            {isSubmitting ? 'Adding...' : 'Add License'}
+                            {isSubmitting ? 'Saving...' : (initialData ? 'Save Changes' : 'Add License')}
                         </Button>
                     </DialogFooter>
                 </form>

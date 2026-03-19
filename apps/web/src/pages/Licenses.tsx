@@ -4,7 +4,21 @@ import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Badge } from '../components/ui/badge';
-import { Search, Download, Loader2, FileX, ArrowUpDown, Key, Plus } from 'lucide-react';
+import { Search, Download, Loader2, FileX, ArrowUpDown, Key, Plus, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '../components/ui/dialog';
 import { api } from '../lib/api';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -24,6 +38,8 @@ export const Licenses = () => {
     const [sortField, setSortField] = useState<SortField>('platform');
     const [sortDir, setSortDir] = useState<SortDir>('asc');
     const [showAddModal, setShowAddModal] = useState(false);
+    const [editTarget, setEditTarget] = useState<any | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
     useEffect(() => {
         if (session) fetchLicenses();
@@ -39,6 +55,24 @@ export const Licenses = () => {
             toast.error('Failed to load licenses');
         }
         finally { setIsLoading(false); }
+    };
+
+    const handleEdit = (license: any) => {
+        setEditTarget(license);
+        setShowAddModal(true);
+    };
+
+    const handleDelete = (id: string) => setDeleteTarget(id);
+
+    const confirmDelete = async (id: string) => {
+        try {
+            await api.delete(`/api/licenses/${id}`);
+            toast.success('License deleted');
+            fetchLicenses();
+        } catch (err) {
+            toast.error('Failed to delete license');
+        }
+        setDeleteTarget(null);
     };
 
     const platforms = useMemo(() => [...new Set(licenses.map(l => l.platform))], [licenses]);
@@ -146,6 +180,7 @@ export const Licenses = () => {
                                     <SortHeader field="cost_per_seat">Cost/Seat</SortHeader>
                                     <TableHead>Monthly</TableHead>
                                     <SortHeader field="renewal_date">Renewal</SortHeader>
+                                    <TableHead className="w-[50px]"></TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -160,11 +195,28 @@ export const Licenses = () => {
                                             <TableCell>${Number(lic.cost_per_seat).toFixed(2)}</TableCell>
                                             <TableCell className="font-medium">${(Number(lic.cost_per_seat) * lic.seats_purchased).toLocaleString()}</TableCell>
                                             <TableCell>{lic.renewal_date ? new Date(lic.renewal_date).toLocaleDateString() : '—'}</TableCell>
+                                            <TableCell>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                            <MoreHorizontal className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem onSelect={() => handleEdit(lic)}>
+                                                            <Pencil className="mr-2 h-4 w-4" /> Edit
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onSelect={() => handleDelete(lic.id)} className="text-destructive focus:text-destructive">
+                                                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </TableCell>
                                         </TableRow>
                                     );
                                 }) : (
                                     <TableRow>
-                                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8">No licenses match your filters.</TableCell>
+                                        <TableCell colSpan={8} className="text-center text-muted-foreground py-8">No licenses match your filters.</TableCell>
                                     </TableRow>
                                 )}
                             </TableBody>
@@ -175,12 +227,32 @@ export const Licenses = () => {
 
             <AddLicenseModal
                 open={showAddModal}
-                onClose={() => setShowAddModal(false)}
+                initialData={editTarget}
+                onClose={() => {
+                    setShowAddModal(false);
+                    setEditTarget(null);
+                }}
                 onSuccess={() => {
                     setShowAddModal(false);
+                    setEditTarget(null);
                     fetchLicenses(); // refresh the list
                 }}
             />
+
+            <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete License?</DialogTitle>
+                        <DialogDescription>
+                            This will permanently delete this license and all its assignments. This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+                        <Button variant="destructive" onClick={() => confirmDelete(deleteTarget!)}>Delete</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
