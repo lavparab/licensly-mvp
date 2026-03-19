@@ -40,7 +40,6 @@ export const Licenses = () => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [editTarget, setEditTarget] = useState<any | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-    const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
     const menuRef = useRef<HTMLDivElement>(null);
 
@@ -165,17 +164,17 @@ export const Licenses = () => {
                     <Button onClick={() => navigate('/integrations')}>Connect Integrations</Button>
                 </Card>
             ) : (
-                <Card className="bg-white dark:bg-[#1a1a1a] dark:border-[#2a2a2a]">
+                <Card className="bg-white dark:bg-[#111111] border border-gray-200 dark:border-[#2e2e2e]">
                     <CardHeader>
                         <div className="flex flex-col sm:flex-row gap-3">
                             <div className="relative flex-1">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input placeholder="Search licenses..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+                                <Input placeholder="Search licenses..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-white dark:bg-[#111111] border-gray-200 dark:border-[#2e2e2e] text-gray-900 dark:text-[#ededed] placeholder:text-gray-400 dark:placeholder:text-[#666666]" />
                             </div>
                             <select
                                 value={platformFilter}
                                 onChange={e => setPlatformFilter(e.target.value)}
-                                className="h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                                className="h-10 rounded-md border border-gray-200 dark:border-[#2e2e2e] bg-white dark:bg-[#111111] text-gray-900 dark:text-[#ededed] px-3 text-sm focus:outline-none"
                             >
                                 <option value="all">All Platforms</option>
                                 {platforms.map(p => <option key={p} value={p}>{p}</option>)}
@@ -184,7 +183,7 @@ export const Licenses = () => {
                     </CardHeader>
                     <CardContent>
                         <Table>
-                            <TableHeader>
+                            <TableHeader className="bg-gray-50 dark:bg-[#111111]">
                                 <TableRow>
                                     <SortHeader field="platform">Platform</SortHeader>
                                     <TableHead>Plan</TableHead>
@@ -200,14 +199,14 @@ export const Licenses = () => {
                                 {filtered.length > 0 ? filtered.map(lic => {
                                     const util = getUtilization(lic.seats_used, lic.seats_purchased);
                                     return (
-                                        <TableRow key={lic.id}>
-                                            <TableCell className="font-medium">{lic.platform}</TableCell>
-                                            <TableCell><Badge variant="outline">{lic.plan_name}</Badge></TableCell>
-                                            <TableCell>{lic.seats_used} / {lic.seats_purchased}</TableCell>
+                                        <TableRow key={lic.id} className="hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors">
+                                            <TableCell className="font-medium text-gray-900 dark:text-[#ededed]">{lic.platform}</TableCell>
+                                            <TableCell><Badge variant="outline" className="dark:border-[#2e2e2e] dark:text-[#a1a1a1]">{lic.plan_name}</Badge></TableCell>
+                                            <TableCell className="text-gray-900 dark:text-[#ededed]">{lic.seats_used} / {lic.seats_purchased}</TableCell>
                                             <TableCell><span className={`font-medium ${getUtilColor(util)}`}>{util}%</span></TableCell>
-                                            <TableCell>${Number(lic.cost_per_seat).toFixed(2)}</TableCell>
-                                            <TableCell className="font-medium">${(Number(lic.cost_per_seat) * lic.seats_purchased).toLocaleString()}</TableCell>
-                                            <TableCell>{lic.renewal_date ? new Date(lic.renewal_date).toLocaleDateString() : '—'}</TableCell>
+                                            <TableCell className="text-gray-900 dark:text-[#ededed]">${Number(lic.cost_per_seat).toFixed(2)}</TableCell>
+                                            <TableCell className="font-medium text-gray-900 dark:text-[#ededed]">${(Number(lic.cost_per_seat) * lic.seats_purchased).toLocaleString()}</TableCell>
+                                            <TableCell className="text-gray-900 dark:text-[#ededed]">{lic.renewal_date ? new Date(lic.renewal_date).toLocaleDateString() : '—'}</TableCell>
                                             <TableCell>
                                                 <div className="relative" ref={openMenuId === lic.id ? menuRef : undefined}>
                                                     <button
@@ -240,7 +239,7 @@ export const Licenses = () => {
                                     );
                                 }) : (
                                     <TableRow>
-                                        <TableCell colSpan={8} className="text-center text-muted-foreground py-8">No licenses match your filters.</TableCell>
+                                        <TableCell colSpan={8} className="text-center text-gray-500 dark:text-[#a1a1a1] py-8">No licenses match your filters.</TableCell>
                                     </TableRow>
                                 )}
                             </TableBody>

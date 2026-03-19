@@ -21,6 +21,34 @@ const CHART_COLORS = [
     '#06b6d4', // cyan
 ];
 
+const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-[#111111] border border-[#2e2e2e] rounded-lg px-3 py-2 shadow-lg">
+                <p className="text-[#ededed] text-[13px] font-medium">
+                    {payload[0].name}
+                </p>
+                <p className="text-[#a1a1a1] text-[12px]">
+                    {payload[0].value} Seats
+                </p>
+            </div>
+        );
+    }
+    return null;
+};
+
+const BarTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-[#111111] border border-[#2e2e2e] rounded-lg px-3 py-2 shadow-lg">
+                <p className="text-[#ededed] text-[13px] font-medium">{label}</p>
+                <p className="text-[#a1a1a1] text-[12px]">${payload[0].value?.toLocaleString()}</p>
+            </div>
+        );
+    }
+    return null;
+};
+
 export const Dashboard = () => {
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(true);
@@ -146,7 +174,7 @@ export const Dashboard = () => {
 
             {/* Quick Stats Row */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="bg-white dark:bg-[#1a1a1a] border border-[#e8e8e8] dark:border-[#2a2a2a] rounded-lg border-t-2 border-t-[#2563eb]">
+                <Card className="bg-white dark:bg-[#111111] border border-[#e8e8e8] dark:border-[#2e2e2e] rounded-lg border-t-2 border-t-[#2563eb]">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-[13px] font-sans font-medium text-gray-500 dark:text-zinc-400">Total Monthly Spend</CardTitle>
                         <CreditCard className="h-4 w-4 text-gray-400 dark:text-zinc-500" strokeWidth={1.5} />
@@ -156,7 +184,7 @@ export const Dashboard = () => {
                         <p className="text-[12px] text-gray-500 dark:text-zinc-400 mt-1">Based on active licenses</p>
                     </CardContent>
                 </Card>
-                <Card className="bg-white dark:bg-[#1a1a1a] border border-[#e8e8e8] dark:border-[#2a2a2a] rounded-lg border-t-2 border-t-[#16a34a]">
+                <Card className="bg-white dark:bg-[#111111] border border-[#e8e8e8] dark:border-[#2e2e2e] rounded-lg border-t-2 border-t-[#16a34a]">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-[13px] font-sans font-medium text-gray-500 dark:text-zinc-400">Potential Savings</CardTitle>
                         <Tag className="h-4 w-4 text-gray-400 dark:text-zinc-500" strokeWidth={1.5} />
@@ -166,7 +194,7 @@ export const Dashboard = () => {
                         <p className="text-[12px] text-gray-500 dark:text-zinc-400 mt-1">From pending optimizations</p>
                     </CardContent>
                 </Card>
-                <Card className="bg-white dark:bg-[#1a1a1a] border border-[#e8e8e8] dark:border-[#2a2a2a] rounded-lg border-t-2 border-t-[#2563eb]">
+                <Card className="bg-white dark:bg-[#111111] border border-[#e8e8e8] dark:border-[#2e2e2e] rounded-lg border-t-2 border-t-[#2563eb]">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-[13px] font-sans font-medium text-gray-500 dark:text-zinc-400">Seat Licensing</CardTitle>
                         <Users className="h-4 w-4 text-gray-400 dark:text-zinc-500" strokeWidth={1.5} />
@@ -176,7 +204,7 @@ export const Dashboard = () => {
                         <p className="text-[12px] text-gray-500 dark:text-zinc-400 mt-1">Used vs Purchased</p>
                     </CardContent>
                 </Card>
-                <Card className="bg-white dark:bg-[#1a1a1a] border border-[#e8e8e8] dark:border-[#2a2a2a] rounded-lg border-t-2 border-t-[#d97706]">
+                <Card className="bg-white dark:bg-[#111111] border border-[#e8e8e8] dark:border-[#2e2e2e] rounded-lg border-t-2 border-t-[#d97706]">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-[13px] font-sans font-medium text-gray-500 dark:text-zinc-400">Compliance Alerts</CardTitle>
                         <AlertCircle className="h-4 w-4 text-gray-400 dark:text-zinc-500" strokeWidth={1.5} />
@@ -208,7 +236,7 @@ export const Dashboard = () => {
                                     <BarChart data={platformSpend} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                                         <XAxis dataKey="name" stroke={textColor} tick={{ fill: textColor, fontSize: 12 }} fontSize={12} tickLine={false} axisLine={false} />
                                         <YAxis stroke={textColor} tick={{ fill: textColor, fontSize: 12 }} fontSize={12} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`} />
-                                        <Tooltip cursor={{ fill: isDark ? '#2a2a2a' : '#f3f4f6' }} contentStyle={{ backgroundColor: isDark ? '#1a1a1a' : '#ffffff', color: labelColor, borderRadius: '6px', border: `1px solid ${gridColor}`, fontFamily: 'DM Sans', fontSize: '13px' }} formatter={(v: number) => [`$${v}`, 'Spend']} />
+                                        <Tooltip content={<BarTooltip />} cursor={{ fill: isDark ? '#2a2a2a' : '#f3f4f6' }} />
                                         <Bar dataKey="spend" fill={barColor} radius={[4, 4, 0, 0]} />
                                     </BarChart>
                                 </ResponsiveContainer>
@@ -231,7 +259,7 @@ export const Dashboard = () => {
                                         <Pie data={utilizationData} cx="50%" cy="50%" innerRadius={70} outerRadius={100} paddingAngle={2} dataKey="value" stroke="none">
                                             {utilizationData.map((entry, i) => (<Cell key={i} fill={entry.color} />))}
                                         </Pie>
-                                        <Tooltip contentStyle={{ backgroundColor: isDark ? '#1a1a1a' : '#ffffff', color: isDark ? '#ffffff' : '#0f0f0f', borderColor: isDark ? '#2a2a2a' : '#e8e8e8' }} formatter={(v: number) => [`${v} Seats`, 'Count']} />
+                                        <Tooltip content={<CustomTooltip />} />
                                         <Legend
                                             formatter={(value) => <span style={{ color: isDark ? '#a1a1aa' : '#555555', fontSize: 12 }}>{value}</span>}
                                             verticalAlign="bottom" height={36}
@@ -248,7 +276,7 @@ export const Dashboard = () => {
 
             {/* Alerts & Renewals */}
             <div className="grid gap-4 md:grid-cols-2">
-                <Card className="bg-white dark:bg-[#1a1a1a] border border-[#e8e8e8] dark:border-[#2a2a2a] rounded-lg">
+                <Card className="bg-white dark:bg-[#111111] border border-[#e8e8e8] dark:border-[#2e2e2e] rounded-lg">
                     <CardHeader><CardTitle className="text-gray-900 dark:text-white">Recent Alerts</CardTitle><CardDescription className="text-gray-500 dark:text-zinc-400">Compliance flags and notifications</CardDescription></CardHeader>
                     <CardContent>
                         <div className="space-y-3">
@@ -268,7 +296,7 @@ export const Dashboard = () => {
                     </CardContent>
                 </Card>
 
-                <Card className="bg-white dark:bg-[#1a1a1a] border border-[#e8e8e8] dark:border-[#2a2a2a] rounded-lg">
+                <Card className="bg-white dark:bg-[#111111] border border-[#e8e8e8] dark:border-[#2e2e2e] rounded-lg">
                     <CardHeader><CardTitle className="text-gray-900 dark:text-white">Upcoming Renewals</CardTitle><CardDescription className="text-gray-500 dark:text-zinc-400">Next 30 days</CardDescription></CardHeader>
                     <CardContent>
                         <div className="space-y-3">

@@ -116,7 +116,7 @@ export const Optimization = () => {
 
             {/* Savings Counters */}
             <div className="grid gap-4 md:grid-cols-2">
-                <Card className="bg-green-50/50 dark:bg-green-950/20 border-green-200 dark:border-green-900">
+                <Card className="bg-green-50/50 dark:bg-[#111111] border-green-200 dark:border-[#2e2e2e]">
                     <CardHeader className="py-4">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -130,7 +130,7 @@ export const Optimization = () => {
                         </div>
                     </CardHeader>
                 </Card>
-                <Card className="bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900">
+                <Card className="bg-blue-50/50 dark:bg-[#111111] border-blue-200 dark:border-[#2e2e2e]">
                     <CardHeader className="py-4">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -149,7 +149,7 @@ export const Optimization = () => {
             {/* Pending Recommendations */}
             <div className="grid gap-4">
                 {recommendations.length > 0 ? recommendations.map(rec => (
-                    <Card key={rec.id}>
+                    <Card key={rec.id} className="bg-white dark:bg-[#111111] border border-gray-200 dark:border-[#2e2e2e]">
                         <div className="flex flex-col md:flex-row md:items-center">
                             <CardHeader className="flex-1">
                                 <div className="flex items-center gap-3 mb-2">
@@ -175,7 +175,7 @@ export const Optimization = () => {
                         </div>
                     </Card>
                 )) : (
-                    <div className="flex flex-col items-center justify-center p-12 text-center border rounded-lg bg-card">
+                    <div className="flex flex-col items-center justify-center p-12 text-center border rounded-lg bg-card dark:bg-[#111111] dark:border-[#2e2e2e]">
                         <div className="bg-muted p-4 rounded-full mb-4"><Check className="h-8 w-8 text-green-500" /></div>
                         <h3 className="text-lg font-medium">All optimized!</h3>
                         <p className="text-muted-foreground max-w-sm mt-2">No pending recommendations. Connect more integrations or check back later.</p>

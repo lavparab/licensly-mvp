@@ -35,8 +35,8 @@ export function Sidebar({ className }: { className?: string }) {
                 className={cn(
                     'flex items-center gap-3 rounded-[6px] px-3 h-9 text-[13px] font-medium transition-all relative',
                     isActive
-                        ? 'bg-[var(--sidebar-active)] text-white before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-[2px] before:rounded-full before:bg-[#2563eb]'
-                        : 'text-[var(--sidebar-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-text)]'
+                        ? 'bg-[#1a1a1a] text-white border-l-2 border-white'
+                        : 'text-[#666666] hover:text-[#ededed] hover:bg-[#111111]'
                 )}
             >
                 <item.icon className="h-[18px] w-[18px]" strokeWidth={1.5} />
