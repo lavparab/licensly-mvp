@@ -1,4 +1,4 @@
-import { supabase } from '../utils/supabase';
+{import { supabase } from '../utils/supabase';
 
 // Helper to calculate days between dates
 const daysBetween = (d1: Date, d2: Date) => {
@@ -26,7 +26,7 @@ export async function checkOrganizationCompliance(orgId: string) {
             if (daysUntilRenewal <= 0) {
                 // Expired
                 await createAlert(orgId, license.id, 'renewal', 'critical', `License for ${license.platform} - ${license.plan_name} has expired or needs immediate action.`);
-            } else if (daysUntilRenewal === 7 || daysUntilRenewal === 14 || daysUntilRenewal === 30) {
+            } else if (daysUntilRenewal <= 30) {
                 // Upcoming renewal alert
                 await createAlert(orgId, license.id, 'renewal', 'warning', `License for ${license.platform} renewing in ${daysUntilRenewal} days. Review utilization.`);
             }
