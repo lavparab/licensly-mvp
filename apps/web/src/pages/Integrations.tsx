@@ -3,7 +3,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription }
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
-import { Unplug, CheckCircle2, RotateCw, AlertCircle, Loader2, Link2Off, Plug, Users, UserX, Bot, GitCommit, GitPullRequest, Eye, Activity, ChevronDown, ChevronUp, Building, Globe } from 'lucide-react';
+import { Unplug, CheckCircle2, RotateCw, AlertCircle, Loader2, Link2Off, Plug, Users, UserX, Bot, GitCommit, GitPullRequest, Eye, Activity, ChevronDown, ChevronUp, Building, Globe, HardDrive } from 'lucide-react';
 import { api } from '../lib/api';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
@@ -609,6 +609,203 @@ function GoogleWorkspaceDataPanel() {
     );
 }
 
+interface DropboxMember {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    status: string;
+    joinedOn: string;
+    avatarUrl: string | null;
+}
+
+interface DropboxStorage {
+    totalStorage: string;
+    allocatedStorage: number;
+    usedStorage: number;
+    unit: string;
+}
+
+function DropboxDataPanel() {
+    const [members, setMembers] = useState<DropboxMember[]>([]);
+    const [inactiveMembers, setInactiveMembers] = useState<DropboxMember[]>([]);
+    const [storage, setStorage] = useState<DropboxStorage | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState<'members' | 'inactive' | 'storage'>('members');
+
+    useEffect(() => {
+        Promise.all([
+            api.get('/api/integrations/dropbox/members'),
+            api.get('/api/integrations/dropbox/inactive'),
+            api.get('/api/integrations/dropbox/storage'),
+        ]).then(([membersRes, inactiveRes, storageRes]) => {
+            setMembers(membersRes.members || []);
+            setInactiveMembers(inactiveRes.inactiveMembers || []);
+            setStorage(storageRes.storage || null);
+        }).catch(err => {
+            toast.error('Failed to load Dropbox data: ' + err.message);
+        }).finally(() => setLoading(false));
+    }, []);
+
+    const tabs = [
+        { id: 'members' as const, label: 'Members', icon: Users, count: members.length },
+        { id: 'inactive' as const, label: 'Inactive', icon: UserX, count: inactiveMembers.length },
+        { id: 'storage' as const, label: 'Storage', icon: HardDrive, count: null },
+    ];
+
+    if (loading) return (
+        <div className="flex justify-center items-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+    );
+
+    return (
+        <div className="mt-4 border-t pt-4">
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3">
+                    <Users className="h-4 w-4 text-blue-500" />
+                    <div>
+                        <p className="text-lg font-bold leading-none">{members.length}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Members</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-950/30 rounded-lg p-3">
+                    <UserX className="h-4 w-4 text-amber-500" />
+                    <div>
+                        <p className="text-lg font-bold leading-none">{inactiveMembers.length}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Inactive</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2 bg-green-50 dark:bg-green-950/30 rounded-lg p-3">
+                    <HardDrive className="h-4 w-4 text-green-500" />
+                    <div className="min-w-0">
+                        <p className="text-lg font-bold leading-none truncate">
+                            {storage ? `${(storage.usedStorage / 1000).toFixed(1)} TB` : '—'}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Storage</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex gap-1 border-b mb-3">
+                {tabs.map(tab => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border-b-2 transition-colors ${activeTab === tab.id
+                            ? 'border-primary text-primary'
+                            : 'border-transparent text-muted-foreground hover:text-foreground'
+                            }`}
+                    >
+                        <tab.icon className="h-3 w-3" />
+                        {tab.label}
+                        {tab.count !== null && (
+                            <Badge variant="secondary" className="text-xs px-1 py-0 h-4">{tab.count}</Badge>
+                        )}
+                    </button>
+                ))}
+            </div>
+
+            {/* Members Tab */}
+            {activeTab === 'members' && (
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                    {members.length === 0 ? (
+                        <p className="text-xs text-muted-foreground text-center py-6">No members found</p>
+                    ) : members.map(member => (
+                        <div key={member.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                            {member.avatarUrl ? (
+                                <img src={member.avatarUrl} alt={member.name} className="h-7 w-7 rounded-full border flex-shrink-0" />
+                            ) : (
+                                <div className="h-7 w-7 rounded-full border flex-shrink-0 bg-muted flex items-center justify-center">
+                                    <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                                </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                    <p className="text-xs font-medium truncate">{member.name}</p>
+                                    {member.role === 'team_admin' && <Badge variant="secondary" className="text-xs px-1 py-0 h-4 flex-shrink-0">Admin</Badge>}
+                                </div>
+                                <p className="text-xs text-muted-foreground truncate">{member.email}</p>
+                            </div>
+                            <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                                <Badge variant={member.status === 'active' ? 'default' : 'secondary'} className="text-xs px-1 py-0 h-4">
+                                    {member.status}
+                                </Badge>
+                                <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                    {member.joinedOn && `Joined ${new Date(member.joinedOn).toLocaleDateString()}`}
+                                </span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Inactive Tab */}
+            {activeTab === 'inactive' && (
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                    {inactiveMembers.length === 0 ? (
+                        <div className="text-center py-6">
+                            <p className="text-xs font-medium">No inactive members 🎉</p>
+                            <p className="text-xs text-muted-foreground mt-1">All members are currently active</p>
+                        </div>
+                    ) : inactiveMembers.map(member => (
+                        <div key={member.id} className="flex items-center gap-3 p-2 rounded-lg bg-amber-50/50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900">
+                            {member.avatarUrl ? (
+                                <img src={member.avatarUrl} alt={member.name} className="h-7 w-7 rounded-full border flex-shrink-0" />
+                            ) : (
+                                <div className="h-7 w-7 rounded-full border flex-shrink-0 bg-muted flex items-center justify-center">
+                                    <UserX className="h-3.5 w-3.5 text-amber-500/70" />
+                                </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                                <p className="text-xs font-medium truncate">{member.name}</p>
+                                <p className="text-xs text-muted-foreground truncate">{member.email}</p>
+                            </div>
+                            <Badge variant="secondary" className="text-xs px-1 py-0 h-4 text-amber-600 flex-shrink-0 border-amber-200">
+                                inactive
+                            </Badge>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Storage Tab */}
+            {activeTab === 'storage' && (
+                <div className="grid grid-cols-2 gap-3">
+                    {!storage ? (
+                        <p className="text-xs text-muted-foreground col-span-2 text-center py-6">No storage data available</p>
+                    ) : (
+                        <>
+                            <div className="bg-muted/50 rounded-lg p-3 col-span-2">
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-1.5">
+                                        <HardDrive className="h-3 w-3 text-muted-foreground" />
+                                        <p className="text-xs font-medium">Team Storage</p>
+                                    </div>
+                                    <span className="text-xs text-muted-foreground">
+                                        {(storage.usedStorage / 1000).toFixed(1)} TB / {(storage.allocatedStorage / 1000).toFixed(1)} TB
+                                    </span>
+                                </div>
+                                <div className="w-full h-2 bg-muted rounded-full overflow-hidden mt-2">
+                                    <div 
+                                        className="h-full bg-blue-500 rounded-full" 
+                                        style={{ width: `${Math.min(100, (storage.usedStorage / storage.allocatedStorage) * 100)}%` }} 
+                                    />
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-2">
+                                    {storage.totalStorage === 'unknown' ? 'Custom policy' : storage.totalStorage}
+                                </p>
+                            </div>
+                        </>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
 export const Integrations = () => {
     const [integrations, setIntegrations] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -700,7 +897,7 @@ export const Integrations = () => {
     };
 
     // Platforms that have a detail panel
-    const EXPANDABLE_PLATFORMS = ['github', 'slack', 'google-workspace'];
+    const EXPANDABLE_PLATFORMS = ['github', 'slack', 'google-workspace', 'dropbox'];
 
     const getPlatformMeta = (name: string) => ALL_PLATFORMS.find(p => p.name.toLowerCase() === name.toLowerCase()) || { icon: '🔌', desc: 'Sync platform data', name };
     const connectedNames = integrations.filter(i => i.status === 'connected').map(i => i.platform.toLowerCase());
@@ -754,6 +951,7 @@ export const Integrations = () => {
                                                         {integration.platform.toLowerCase() === 'github' && <GithubDataPanel />}
                                                         {integration.platform.toLowerCase() === 'slack' && <SlackDataPanel />}
                                                         {integration.platform.toLowerCase() === 'google-workspace' && <GoogleWorkspaceDataPanel />}
+                                                        {integration.platform.toLowerCase() === 'dropbox' && <DropboxDataPanel />}
                                                     </>
                                                 )}
                                             </CardContent>

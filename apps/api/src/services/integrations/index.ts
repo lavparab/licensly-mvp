@@ -3,6 +3,7 @@ import { MockAdapter } from './MockAdapter';
 import { GithubAdapter } from './GithubAdapter';
 import { SlackAdapter } from './SlackAdapter';
 import { GoogleWorkspaceAdapter } from './GoogleWorkspaceAdapter';
+import { DropboxAdapter } from './DropboxAdapter';
 
 export class IntegrationManager {
     private adapters: Map<string, IntegrationAdapter> = new Map();
@@ -18,7 +19,7 @@ export class IntegrationManager {
         this.registerAdapter(new MockAdapter('Adobe Creative Cloud'));
         this.registerAdapter(new MockAdapter('Zoom'));
         this.registerAdapter(new GithubAdapter());
-        this.registerAdapter(new MockAdapter('Dropbox'));
+        this.registerAdapter(new DropboxAdapter());
     }
 
     private registerAdapter(adapter: IntegrationAdapter) {
