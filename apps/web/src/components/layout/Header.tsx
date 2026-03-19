@@ -123,7 +123,7 @@ export function Header() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                         align="end"
-                        className="z-50 w-[360px] max-h-[400px] overflow-y-auto p-0 rounded-[8px] border-[var(--border)] shadow-md"
+                        className="z-[9999] w-[360px] max-h-[400px] overflow-y-auto p-0 rounded-[8px] border border-gray-200 shadow-lg bg-white"
                     >
                         <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] sticky top-0 bg-[var(--bg-primary)] z-10">
                             <span className="font-semibold text-[14px] text-[var(--text-primary)]">Notifications</span>
@@ -171,7 +171,7 @@ export function Header() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                         align="end"
-                        className="z-50 w-[220px] rounded-[8px] p-0 border-[var(--border)] shadow-md"
+                        className="z-[9999] w-[220px] rounded-[8px] p-0 border border-gray-200 shadow-lg bg-white"
                     >
                         <div className="px-4 py-3 flex flex-col gap-0.5 border-b border-[var(--border)] bg-[var(--bg-secondary)] rounded-t-[7px]">
                             <span className="font-semibold text-[14px] text-[var(--text-primary)] truncate">{userDisplayName}</span>
