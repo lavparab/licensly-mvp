@@ -7,7 +7,7 @@ export class SlackAdapter implements IntegrationAdapter {
     private clientSecret = process.env.SLACK_CLIENT_SECRET || '';
 
     getAuthUrl(state: string, redirectUri: string): string {
-        return `https://slack.com/oauth/v2/authorize?client_id=${this.clientId}&redirect_uri=${redirectUri}&state=${state}&scope=users:read,users:read.email,team:read,admin`;
+        return `https://slack.com/oauth/v2/authorize?client_id=${this.clientId}&redirect_uri=${redirectUri}&state=${state}&scope=users:read,users:read.email,team:read`;
     }
 
     async authenticate(credentials: OAuthCredentials, redirectUri: string): Promise<AuthResult> {
@@ -19,16 +19,16 @@ export class SlackAdapter implements IntegrationAdapter {
                 redirect_uri: redirectUri
             }
         });
-        
+
         const data = response.data;
         if (!data.ok) throw new Error(data.error || 'Slack authentication failed');
 
         return {
             accessToken: data.access_token,
-            metadata: { 
-                teamId: data.team.id, 
-                teamName: data.team.name, 
-                botToken: data.access_token 
+            metadata: {
+                teamId: data.team.id,
+                teamName: data.team.name,
+                botToken: data.access_token
             }
         };
     }
@@ -60,11 +60,11 @@ export class SlackAdapter implements IntegrationAdapter {
         if (!teamResponse.data.ok) throw new Error(teamResponse.data.error || 'Failed to fetch team info');
 
         const team = teamResponse.data.team;
-        
+
         const usersResponse = await axios.get('https://slack.com/api/users.list', {
             headers: { Authorization: `Bearer ${accessToken}` }
         });
-        
+
         const totalMembers = usersResponse.data.members?.filter((m: any) => !m.is_bot && !m.deleted && m.id !== 'USLACKBOT').length || 0;
 
         return [{
