@@ -34,7 +34,7 @@ export function Header() {
     const { user, signOut } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
-    
+
     const [notifications, setNotifications] = useState<any[]>(demoNotifications);
     const [orgName, setOrgName] = useState('Acme Corp');
 
@@ -53,7 +53,8 @@ export function Header() {
         const loadNotifs = async () => {
             try {
                 const res = await api.get('/api/notifications');
-                if (res?.length) setNotifications(res);
+                if (res?.notifications?.length) setNotifications(res.notifications);
+
             } catch (e) {
                 // Ignore API error and persist demo state
             }
@@ -120,7 +121,10 @@ export function Header() {
                             <span className="sr-only">Notifications</span>
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-[360px] max-h-[400px] overflow-y-auto p-0 rounded-[8px] border-[var(--border)] shadow-md">
+                    <DropdownMenuContent
+                        align="end"
+                        className="z-50 w-[360px] max-h-[400px] overflow-y-auto p-0 rounded-[8px] border-[var(--border)] shadow-md"
+                    >
                         <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] sticky top-0 bg-[var(--bg-primary)] z-10">
                             <span className="font-semibold text-[14px] text-[var(--text-primary)]">Notifications</span>
                             {unreadCount > 0 && (
@@ -165,7 +169,10 @@ export function Header() {
                             </span>
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-[220px] rounded-[8px] p-0 border-[var(--border)] shadow-md">
+                    <DropdownMenuContent
+                        align="end"
+                        className="z-50 w-[220px] rounded-[8px] p-0 border-[var(--border)] shadow-md"
+                    >
                         <div className="px-4 py-3 flex flex-col gap-0.5 border-b border-[var(--border)] bg-[var(--bg-secondary)] rounded-t-[7px]">
                             <span className="font-semibold text-[14px] text-[var(--text-primary)] truncate">{userDisplayName}</span>
                             <span className="text-[12px] text-[var(--text-muted)] truncate">{orgName}</span>
@@ -178,8 +185,8 @@ export function Header() {
                                 <Building className="mr-2.5 h-4 w-4 text-[var(--text-secondary)]" /> Organization
                             </DropdownMenuItem>
                             <DropdownMenuSeparator className="my-1 border-[var(--border)]" />
-                            <DropdownMenuItem 
-                                onClick={handleSignOut} 
+                            <DropdownMenuItem
+                                onClick={handleSignOut}
                                 className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer text-[13px] px-3 py-2 rounded-[4px]"
                             >
                                 <LogOut className="mr-2.5 h-4 w-4" /> Log out
