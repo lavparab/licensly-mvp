@@ -45,6 +45,7 @@ Sentry.init({
 });
 
 const app = express();
+app.set('trust proxy', 1);
 const port = process.env.PORT || 4000;
 
 // ── Global Middleware ──
