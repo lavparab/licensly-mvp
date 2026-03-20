@@ -129,6 +129,9 @@ router.patch('/:id', requireAuth, validate(updateLicenseSchema), asyncHandler(as
     const orgId = req.orgId;
     const { id } = req.params;
 
+    // ADD THIS — remove 'name' field before sending to Supabase
+    const { name, ...updateData } = req.body;
+
     // Verify ownership
     const { data: existing } = await supabase
         .from('licenses')
@@ -143,7 +146,7 @@ router.patch('/:id', requireAuth, validate(updateLicenseSchema), asyncHandler(as
 
     const { data: license, error } = await supabase
         .from('licenses')
-        .update(req.body)
+        .update(updateData) // ← use updateData instead of req.body
         .eq('id', id)
         .eq('org_id', orgId)
         .select()
