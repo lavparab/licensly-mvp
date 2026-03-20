@@ -5,7 +5,7 @@ import {
     BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell, Legend
 } from 'recharts';
-import { AlertCircle, CreditCard, Users, Tag, Loader2, RotateCw, Download } from 'lucide-react';
+import { AlertCircle, CreditCard, Users, Tag, Loader2, RotateCw, Download, Activity } from 'lucide-react';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { api } from '../lib/api';
@@ -60,7 +60,11 @@ export const Dashboard = () => {
         activeSeats: 0,
         totalSeats: 0,
         criticalAlerts: 0,
-        warningAlerts: 0
+        warningAlerts: 0,
+        healthScore: 100,
+        healthGrade: 'Good',
+        healthColor: 'green',
+        healthDeductions: [] as string[]
     });
     const [platformSpend, setPlatformSpend] = useState<{ name: string; spend: number }[]>([]);
     const [utilizationData, setUtilizationData] = useState<{ name: string; value: number; color: string }[]>([]);
@@ -94,6 +98,10 @@ export const Dashboard = () => {
                 totalSeats: s.totalSeats || 0,
                 criticalAlerts: s.criticalAlerts || 0,
                 warningAlerts: s.warningAlerts || 0,
+                healthScore: s.healthScore ?? 100,
+                healthGrade: s.healthGrade || 'Good',
+                healthColor: s.healthColor || 'green',
+                healthDeductions: s.healthDeductions || [],
             });
 
             setPlatformSpend((data.platformSpend || []).map((p: any) => ({ name: p.name, spend: Number(p.spend) })));
@@ -174,7 +182,7 @@ export const Dashboard = () => {
             </div>
 
             {/* Quick Stats Row */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                 <Card className="bg-white dark:bg-[#111111] border border-[#e8e8e8] dark:border-[#2e2e2e] rounded-lg border-t-2 border-t-[#2563eb]">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-[13px] font-sans font-medium text-gray-500 dark:text-zinc-400">Total Monthly Spend</CardTitle>
@@ -217,6 +225,32 @@ export const Dashboard = () => {
                             {stats.criticalAlerts === 0 && stats.warningAlerts === 0 && <span className="text-gray-500 dark:text-zinc-400 text-[13px]">All clear</span>}
                         </div>
                         <p className="text-[12px] text-gray-500 dark:text-zinc-400 mt-1">Active notifications</p>
+                    </CardContent>
+                </Card>
+                <Card className="bg-white dark:bg-[#111111] border border-[#e8e8e8] dark:border-[#2e2e2e] rounded-lg border-t-2"
+                    style={{ borderTopColor: stats.healthColor === 'green' ? '#16a34a' : stats.healthColor === 'blue' ? '#2563eb' : stats.healthColor === 'amber' ? '#d97706' : '#dc2626' }}
+                >
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-[13px] font-sans font-medium text-gray-500 dark:text-zinc-400">
+                            License Health Score
+                        </CardTitle>
+                        <Activity className="h-4 w-4 text-gray-400 dark:text-zinc-500" strokeWidth={1.5} />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex items-end gap-2">
+                            <div
+                                className="text-[24px] font-mono font-semibold"
+                                style={{ color: stats.healthColor === 'green' ? '#16a34a' : stats.healthColor === 'blue' ? '#2563eb' : stats.healthColor === 'amber' ? '#d97706' : '#dc2626' }}
+                            >
+                                {stats.healthScore}%
+                            </div>
+                            <span className="text-[13px] text-gray-500 dark:text-zinc-400 mb-1">{stats.healthGrade}</span>
+                        </div>
+                        <p className="text-[12px] text-gray-500 dark:text-zinc-400 mt-1">
+                            {stats.healthDeductions.length === 0
+                                ? 'All systems healthy'
+                                : stats.healthDeductions[0]}
+                        </p>
                     </CardContent>
                 </Card>
             </div>

@@ -67,6 +67,65 @@ router.get('/stats', requireAuth, asyncHandler(async (req: AuthRequest, res) => 
         if (a.severity === 'warning') warningAlerts++;
     }
 
+    // Calculate License Health Score (0-100)
+    const calculateHealthScore = async () => {
+        let score = 100;
+        const deductions: string[] = [];
+
+        // 1. Utilization penalty — penalize low utilization (wasted seats)
+        const utilizationPct = totalSeats > 0 ? (activeSeats / totalSeats) * 100 : 100;
+        if (utilizationPct < 50) { score -= 25; deductions.push('Low seat utilization'); }
+        else if (utilizationPct < 70) { score -= 15; deductions.push('Moderate seat utilization'); }
+        else if (utilizationPct < 85) { score -= 5; }
+
+        // 2. Compliance alerts penalty
+        if (criticalAlerts > 0) { score -= (criticalAlerts * 15); deductions.push(`${criticalAlerts} critical alert(s)`); }
+        if (warningAlerts > 0) { score -= (warningAlerts * 5); deductions.push(`${warningAlerts} warning(s)`); }
+
+        // 3. Expiring licenses penalty
+        const expiring7 = licenses.filter(l => {
+            if (!l.renewal_date) return false;
+            const days = Math.ceil((new Date(l.renewal_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+            return days >= 0 && days <= 7;
+        }).length;
+
+        const expiring30 = licenses.filter(l => {
+            if (!l.renewal_date) return false;
+            const days = Math.ceil((new Date(l.renewal_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+            return days > 7 && days <= 30;
+        }).length;
+
+        const expired = licenses.filter(l => {
+            if (!l.renewal_date) return false;
+            return new Date(l.renewal_date) < now;
+        }).length;
+
+        if (expired > 0) { score -= (expired * 20); deductions.push(`${expired} expired license(s)`); }
+        if (expiring7 > 0) { score -= (expiring7 * 10); deductions.push(`${expiring7} expiring in 7 days`); }
+        if (expiring30 > 0) { score -= (expiring30 * 3); deductions.push(`${expiring30} expiring in 30 days`); }
+
+        // 4. No integrations penalty
+        const { data: integrations } = await supabase
+            .from('integrations')
+            .select('status')
+            .eq('org_id', orgId);
+
+        const connectedCount = (integrations || []).filter(i => i.status === 'connected').length;
+        if (connectedCount === 0) { score -= 10; deductions.push('No integrations connected'); }
+
+        // Clamp between 0 and 100
+        const finalScore = Math.max(0, Math.min(100, score));
+
+        return {
+            score: finalScore,
+            grade: finalScore >= 90 ? 'Excellent' : finalScore >= 75 ? 'Good' : finalScore >= 60 ? 'Fair' : 'Poor',
+            color: finalScore >= 90 ? 'green' : finalScore >= 75 ? 'blue' : finalScore >= 60 ? 'amber' : 'red',
+            deductions,
+        };
+    };
+
+    const healthScore = await calculateHealthScore();
+
     const platformSpend = Object.entries(spendByPlatform)
         .map(([name, spend]) => ({ name, spend }))
         .sort((a, b) => b.spend - a.spend)
@@ -84,6 +143,10 @@ router.get('/stats', requireAuth, asyncHandler(async (req: AuthRequest, res) => 
             totalSeats,
             criticalAlerts,
             warningAlerts,
+            healthScore: healthScore.score,
+            healthGrade: healthScore.grade,
+            healthColor: healthScore.color,
+            healthDeductions: healthScore.deductions,
         },
         platformSpend,
         utilizationData: [
