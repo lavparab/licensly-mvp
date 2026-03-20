@@ -7,8 +7,19 @@ import { Input } from '../components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Select } from '../components/ui/select';
 import { Badge } from '../components/ui/badge';
-import { Check, ChevronRight, ChevronLeft, Building2, Puzzle, FileText, PartyPopper, Loader2 } from 'lucide-react';
+import { Check, ChevronRight, ChevronLeft, Building2, Puzzle, FileText, PartyPopper, Loader2, MessageSquare, Users, Mail, LayoutGrid, Palette, Video, Github, Brush, CheckCircle2, Activity } from 'lucide-react';
 import { toast } from 'sonner';
+
+const PLATFORM_ICONS: Record<string, any> = {
+    'Slack': MessageSquare,
+    'Microsoft Teams': Users,
+    'Google Workspace': Mail,
+    'Microsoft 365': LayoutGrid,
+    'Adobe Creative Cloud': Palette,
+    'Zoom': Video,
+    'GitHub': Github,
+    'Canva': Brush,
+};
 
 const INDUSTRIES = [
     'Technology', 'Finance', 'Healthcare', 'Education', 'Retail',
@@ -18,15 +29,14 @@ const INDUSTRIES = [
 const COMPANY_SIZES = ['1-50', '51-200', '201-1000', '1000+'];
 
 const PLATFORMS = [
-    { name: 'Slack', icon: '💬', desc: 'Team messaging & communication' },
-    { name: 'Microsoft Teams', icon: '👥', desc: 'Collaboration & meetings' },
-    { name: 'Google Workspace', icon: '📧', desc: 'Email, docs & drive' },
-    { name: 'Microsoft 365', icon: '📊', desc: 'Office suite & services' },
-    { name: 'Adobe Creative Cloud', icon: '🎨', desc: 'Design & creative tools' },
-    { name: 'Zoom', icon: '📹', desc: 'Video conferencing' },
-    { name: 'GitHub', icon: '🐙', desc: 'Code hosting & collaboration' },
-    { name: 'Dropbox', icon: '📦', desc: 'Cloud storage & sharing' },
-    { name: 'Canva', icon: '🖌️', desc: 'Graphic design platform' },
+    { name: 'Slack', icon: MessageSquare, desc: 'Team messaging & communication' },
+    { name: 'Microsoft Teams', icon: Users, desc: 'Collaboration & meetings' },
+    { name: 'Google Workspace', icon: Mail, desc: 'Email, docs & drive' },
+    { name: 'Microsoft 365', icon: LayoutGrid, desc: 'Office suite & services' },
+    { name: 'Adobe Creative Cloud', icon: Palette, desc: 'Design & creative tools' },
+    { name: 'Zoom', icon: Video, desc: 'Video conferencing' },
+    { name: 'GitHub', icon: Github, desc: 'Code hosting & collaboration' },
+    { name: 'Canva', icon: Brush, desc: 'Graphic design platform' },
 ];
 
 const STEPS = [
@@ -151,8 +161,8 @@ export const Onboarding = () => {
                                         type="button"
                                         onClick={() => setIndustry(ind)}
                                         className={`rounded-lg border px-4 py-3 text-sm text-left transition-all ${industry === ind
-                                            ? 'border-primary bg-primary/10 text-primary font-medium'
-                                            : 'border-border hover:border-primary/50 hover:bg-muted'
+                                            ? 'border-[#2563eb] bg-[#2563eb]/10 text-[#2563eb] font-medium'
+                                            : 'border-border hover:border-[#2563eb]/50 hover:bg-muted'
                                             }`}
                                     >
                                         {ind}
@@ -169,8 +179,8 @@ export const Onboarding = () => {
                                         type="button"
                                         onClick={() => setCompanySize(size)}
                                         className={`rounded-lg border px-4 py-3 text-sm text-center transition-all ${companySize === size
-                                            ? 'border-primary bg-primary/10 text-primary font-medium'
-                                            : 'border-border hover:border-primary/50 hover:bg-muted'
+                                            ? 'border-[#2563eb] bg-[#2563eb] text-white font-medium'
+                                            : 'border-border hover:border-[#2563eb]/50 hover:bg-muted'
                                             }`}
                                     >
                                         {size}
@@ -186,23 +196,26 @@ export const Onboarding = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         {PLATFORMS.map(p => {
                             const selected = selectedPlatforms.includes(p.name);
+                            const Icon = PLATFORM_ICONS[p.name] || Activity;
                             return (
                                 <button
                                     key={p.name}
                                     type="button"
                                     onClick={() => togglePlatform(p.name)}
                                     className={`flex items-center gap-3 rounded-xl border-2 p-4 text-left transition-all ${selected
-                                        ? 'border-primary bg-primary/5 shadow-sm'
-                                        : 'border-border hover:border-primary/40 hover:bg-muted/50'
+                                        ? 'border-[#2563eb] bg-[#2563eb]/5 shadow-sm'
+                                        : 'border-border hover:border-[#2563eb]/40 hover:bg-muted/50'
                                         }`}
                                 >
-                                    <span className="text-2xl">{p.icon}</span>
+                                    <span className="flex items-center justify-center bg-gray-100 dark:bg-[#2a2a2a] p-2 rounded-lg">
+                                        <Icon className="h-5 w-5 text-[#2563eb]" />
+                                    </span>
                                     <div className="flex-1 min-w-0">
                                         <p className="font-medium text-sm">{p.name}</p>
                                         <p className="text-xs text-muted-foreground truncate">{p.desc}</p>
                                     </div>
                                     {selected && (
-                                        <div className="bg-primary text-primary-foreground rounded-full p-0.5">
+                                        <div className="bg-[#2563eb] text-white rounded-full p-0.5">
                                             <Check className="h-3 w-3" />
                                         </div>
                                     )}
@@ -221,9 +234,12 @@ export const Onboarding = () => {
                         <div className="space-y-3">
                             {licenseInputs.map((lic, idx) => {
                                 const platform = PLATFORMS.find(p => p.name === lic.platform);
+                                const Icon = platform ? PLATFORM_ICONS[platform.name] : Activity;
                                 return (
                                     <div key={lic.platform} className="flex items-center gap-4 rounded-lg border p-4">
-                                        <span className="text-xl">{platform?.icon}</span>
+                                        <span className="flex items-center justify-center bg-gray-100 dark:bg-[#2a2a2a] p-2 rounded-lg">
+                                            <Icon className="h-5 w-5 text-[#2563eb]" />
+                                        </span>
                                         <div className="flex-1 min-w-0">
                                             <p className="font-medium text-sm">{lic.platform}</p>
                                         </div>
@@ -251,7 +267,7 @@ export const Onboarding = () => {
                                             </div>
                                             <div className="flex flex-col items-end">
                                                 <label className="text-xs text-muted-foreground mb-1">Monthly</label>
-                                                <div className="h-9 flex items-center font-medium text-sm text-green-600">
+                                                <div className={`h-9 flex items-center font-medium text-sm ${(lic.seats * lic.costPerSeat) > 0 ? 'text-[#16a34a]' : 'text-muted-foreground'}`}>
                                                     ${(lic.seats * lic.costPerSeat).toLocaleString()}
                                                 </div>
                                             </div>
@@ -275,8 +291,8 @@ export const Onboarding = () => {
                 return (
                     <div className="space-y-6">
                         <div className="text-center mb-6">
-                            <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
-                                <PartyPopper className="h-8 w-8 text-green-600" />
+                            <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-[#16a34a]/10 mb-4">
+                                <CheckCircle2 className="h-8 w-8 text-[#16a34a]" />
                             </div>
                             <h3 className="text-xl font-semibold">You're all set!</h3>
                             <p className="text-muted-foreground mt-1">Here's a summary of your setup</p>
@@ -301,10 +317,13 @@ export const Onboarding = () => {
                                 <div className="space-y-2">
                                     {licenseInputs.map(lic => {
                                         const platform = PLATFORMS.find(p => p.name === lic.platform);
+                                        const Icon = platform ? PLATFORM_ICONS[platform.name] : Activity;
                                         return (
                                             <div key={lic.platform} className="flex items-center justify-between text-sm py-1.5 border-b last:border-0">
                                                 <div className="flex items-center gap-2">
-                                                    <span>{platform?.icon}</span>
+                                                    <span className="flex items-center justify-center bg-gray-100 dark:bg-[#2a2a2a] p-1.5 rounded-md">
+                                                        <Icon className="h-4 w-4 text-[#2563eb]" />
+                                                    </span>
                                                     <span className="font-medium">{lic.platform}</span>
                                                 </div>
                                                 <div className="text-muted-foreground">
@@ -332,7 +351,8 @@ export const Onboarding = () => {
                 <div className="max-w-3xl mx-auto px-4 py-4">
                     <div className="flex items-center justify-between mb-4">
                         <h1 className="text-xl font-bold flex items-center gap-2">
-                            <span className="text-primary">Licensly</span>
+                            <Activity className="h-6 w-6 text-[#2563eb]" />
+                            <span className="text-[#2563eb]">Licensly</span>
                             <span className="text-muted-foreground font-normal">Setup</span>
                         </h1>
                         <Badge variant="secondary">Step {step + 1} of {STEPS.length}</Badge>
@@ -340,7 +360,7 @@ export const Onboarding = () => {
                     <div className="flex gap-2">
                         {STEPS.map((_s, i) => (
                             <div key={i} className="flex-1 flex items-center gap-2">
-                                <div className={`h-1.5 flex-1 rounded-full transition-all ${i <= step ? 'bg-primary' : 'bg-muted'
+                                <div className={`h-1.5 flex-1 rounded-full transition-all ${i <= step ? 'bg-[#2563eb]' : 'bg-muted'
                                     }`} />
                             </div>
                         ))}
@@ -387,7 +407,7 @@ export const Onboarding = () => {
                                 <ChevronRight className="ml-2 h-4 w-4" />
                             </Button>
                         ) : (
-                            <Button onClick={handleComplete} disabled={isSubmitting}>
+                            <Button onClick={handleComplete} disabled={isSubmitting} className="bg-[#2563eb] hover:bg-[#2563eb]/90 text-white">
                                 {isSubmitting ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
