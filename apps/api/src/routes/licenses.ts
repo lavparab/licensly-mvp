@@ -96,7 +96,7 @@ router.post('/', requireAuth, asyncHandler(async (req: AuthRequest, res) => {
             seats_purchased: Number(seats_purchased),
             seats_used: Number(seats_used) || 0,
             cost_per_seat: Number(cost_per_seat),
-            billing_cycle: billing_cycle.toLowerCase(), 
+            billing_cycle: billing_cycle.toLowerCase(),
             renewal_date,
             vendor,
             category,
@@ -125,6 +125,7 @@ router.post('/', requireAuth, asyncHandler(async (req: AuthRequest, res) => {
 
 // PATCH /api/licenses/:id — Update license details
 router.patch('/:id', requireAuth, validate(updateLicenseSchema), asyncHandler(async (req: AuthRequest, res) => {
+    console.log('PATCH body received:', JSON.stringify(req.body));
     const orgId = req.orgId;
     const { id } = req.params;
 
