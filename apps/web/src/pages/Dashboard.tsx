@@ -167,9 +167,9 @@ export const Dashboard = () => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div>
                     <h1 className="font-sans font-semibold text-[32px] tracking-tight text-gray-900 dark:text-white">Dashboard</h1>
-                    <p className="text-[14px] text-gray-500 dark:text-zinc-400">Monitor your corporate SaaS licenses and identify savings.</p>
+                    <p className="text-[14px] text-gray-500 dark:text-zinc-400 truncate sm:whitespace-normal">Monitor your corporate SaaS licenses and identify savings.</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                     <Button variant="outline" className="h-9 rounded-[6px] text-[13px]" onClick={handleSyncNow} disabled={isSyncing}>
                         <RotateCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} strokeWidth={1.5} />
                         {isSyncing ? 'Syncing...' : 'Sync Now'}
@@ -182,14 +182,14 @@ export const Dashboard = () => {
             </div>
 
             {/* Quick Stats Row */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+            <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
                 <Card className="bg-white dark:bg-[#111111] border border-[#e8e8e8] dark:border-[#2e2e2e] rounded-lg border-t-2 border-t-[#2563eb]">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-[13px] font-sans font-medium text-gray-500 dark:text-zinc-400">Total Monthly Spend</CardTitle>
                         <CreditCard className="h-4 w-4 text-gray-400 dark:text-zinc-500" strokeWidth={1.5} />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-[24px] font-mono font-semibold text-gray-900 dark:text-white">${stats.totalSpend.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                        <div className="text-[18px] sm:text-[24px] font-mono font-semibold text-gray-900 dark:text-white">${stats.totalSpend.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
                         <p className="text-[12px] text-gray-500 dark:text-zinc-400 mt-1">Based on active licenses</p>
                     </CardContent>
                 </Card>
@@ -199,7 +199,7 @@ export const Dashboard = () => {
                         <Tag className="h-4 w-4 text-gray-400 dark:text-zinc-500" strokeWidth={1.5} />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-[24px] font-mono font-semibold text-[#16a34a]">${stats.savings.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                        <div className="text-[18px] sm:text-[24px] font-mono font-semibold text-[#16a34a]">${stats.savings.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
                         <p className="text-[12px] text-gray-500 dark:text-zinc-400 mt-1">From pending optimizations</p>
                     </CardContent>
                 </Card>
@@ -209,7 +209,7 @@ export const Dashboard = () => {
                         <Users className="h-4 w-4 text-gray-400 dark:text-zinc-500" strokeWidth={1.5} />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-[24px] font-mono font-semibold text-gray-900 dark:text-white">{stats.activeSeats} / {stats.totalSeats}</div>
+                        <div className="text-[18px] sm:text-[24px] font-mono font-semibold text-gray-900 dark:text-white">{stats.activeSeats} / {stats.totalSeats}</div>
                         <p className="text-[12px] text-gray-500 dark:text-zinc-400 mt-1">Used vs Purchased</p>
                     </CardContent>
                 </Card>
@@ -239,7 +239,7 @@ export const Dashboard = () => {
                     <CardContent>
                         <div className="flex items-end gap-2">
                             <div
-                                className="text-[24px] font-mono font-semibold"
+                                className="text-[18px] sm:text-[24px] font-mono font-semibold"
                                 style={{ color: stats.healthColor === 'green' ? '#16a34a' : stats.healthColor === 'blue' ? '#2563eb' : stats.healthColor === 'amber' ? '#d97706' : '#dc2626' }}
                             >
                                 {stats.healthScore}%
@@ -256,8 +256,8 @@ export const Dashboard = () => {
             </div>
 
             {/* Charts */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="col-span-4 bg-white dark:bg-[#1a1a1a] border border-[#e8e8e8] dark:border-[#2a2a2a] rounded-lg">
+            <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
+                <Card className="col-span-1 lg:col-span-4 bg-white dark:bg-[#1a1a1a] border border-[#e8e8e8] dark:border-[#2a2a2a] rounded-lg">
                     <CardHeader><CardTitle className="text-gray-900 dark:text-white">Top Spend by Platform</CardTitle></CardHeader>
                     <CardContent className="pl-2">
                         <div className="h-[300px] w-full">
@@ -284,7 +284,7 @@ export const Dashboard = () => {
                     </CardContent>
                 </Card>
 
-                <Card className="col-span-3 bg-white dark:bg-[#1a1a1a] border border-[#e8e8e8] dark:border-[#2a2a2a] rounded-lg">
+                <Card className="col-span-1 lg:col-span-3 bg-white dark:bg-[#1a1a1a] border border-[#e8e8e8] dark:border-[#2a2a2a] rounded-lg">
                     <CardHeader><CardTitle className="text-gray-900 dark:text-white">Seat Utilization</CardTitle><CardDescription className="text-gray-500 dark:text-zinc-400">All active integrations</CardDescription></CardHeader>
                     <CardContent>
                         <div className="h-[280px] w-full">
@@ -312,7 +312,7 @@ export const Dashboard = () => {
             <ForecastChart />
 
             {/* Alerts & Renewals */}
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                 <Card className="bg-white dark:bg-[#111111] border border-[#e8e8e8] dark:border-[#2e2e2e] rounded-lg">
                     <CardHeader><CardTitle className="text-gray-900 dark:text-white">Recent Alerts</CardTitle><CardDescription className="text-gray-500 dark:text-zinc-400">Compliance flags and notifications</CardDescription></CardHeader>
                     <CardContent>

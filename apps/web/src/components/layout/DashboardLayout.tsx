@@ -29,7 +29,7 @@ export function DashboardLayout() {
                 {/* Main Content Area */}
                 <div className="flex flex-col w-full md:pl-[240px]">
                     <Header />
-                    <main className="flex-1 p-4 sm:px-6 md:gap-8 bg-[var(--bg-primary)]">
+                    <main className="flex-1 p-3 sm:p-6 md:gap-8 bg-[var(--bg-primary)]">
                         <div className="mx-auto grid w-full max-w-6xl items-start gap-6 py-6 animate-fade-up">
                             <Outlet />
                         </div>

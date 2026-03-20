@@ -183,7 +183,7 @@ export function AIQueryPanel() {
             {/* Floating button */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="fixed bottom-6 right-6 z-[9998] flex items-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition-all duration-200 hover:scale-105"
+                className="fixed bottom-6 right-4 sm:right-6 z-[9998] flex items-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition-all duration-200 hover:scale-105"
             >
                 {isOpen ? (
                     <X className="h-5 w-5" />
@@ -197,7 +197,7 @@ export function AIQueryPanel() {
 
             {/* Panel */}
             {isOpen && (
-                <div className="fixed bottom-20 right-6 z-[9997] w-[420px] max-w-[calc(100vw-3rem)] h-[600px] max-h-[calc(100vh-8rem)] bg-white dark:bg-[#111111] border border-gray-200 dark:border-[#2e2e2e] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+                <div className="fixed bottom-20 right-3 left-3 sm:left-auto sm:right-6 z-[9997] w-auto sm:w-[420px] h-[500px] sm:h-[600px] max-h-[calc(100vh-8rem)] bg-white dark:bg-[#111111] border border-gray-200 dark:border-[#2e2e2e] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
                     
                     {/* Header */}
                     <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 dark:border-[#2e2e2e] bg-gradient-to-r from-blue-600 to-blue-700">

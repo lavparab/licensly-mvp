@@ -111,7 +111,7 @@ export function Header() {
                     Home
                 </Link>
                 <ChevronRight className="h-3 w-3 text-gray-400 dark:text-[#666666]" />
-                <span className="text-sm font-medium text-gray-900 dark:text-[#ededed]">{currentPage}</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-[#ededed] truncate max-w-[120px] sm:max-w-none">{currentPage}</span>
             </div>
 
             <div className="flex items-center gap-2 md:ml-auto">

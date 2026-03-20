@@ -174,7 +174,7 @@ export const Licenses = () => {
                             <select
                                 value={platformFilter}
                                 onChange={e => setPlatformFilter(e.target.value)}
-                                className="h-10 rounded-md border border-gray-200 dark:border-[#2e2e2e] bg-white dark:bg-[#111111] text-gray-900 dark:text-[#ededed] px-3 text-sm focus:outline-none"
+                                className="w-full sm:w-auto h-10 rounded-md border border-gray-200 dark:border-[#2e2e2e] bg-white dark:bg-[#111111] text-gray-900 dark:text-[#ededed] px-3 text-sm focus:outline-none"
                             >
                                 <option value="all">All Platforms</option>
                                 {platforms.map(p => <option key={p} value={p}>{p}</option>)}
@@ -182,6 +182,69 @@ export const Licenses = () => {
                         </div>
                     </CardHeader>
                     <CardContent>
+                        {/* Mobile view — cards */}
+                        <div className="block md:hidden space-y-3">
+                            {filtered.length > 0 ? filtered.map(lic => {
+                                const util = getUtilization(lic.seats_used, lic.seats_purchased);
+                                return (
+                                    <div key={lic.id} className="bg-white dark:bg-[#111111] border border-gray-200 dark:border-[#2e2e2e] rounded-lg p-4">
+                                        <div className="flex items-start justify-between mb-3">
+                                            <div>
+                                                <p className="font-medium text-gray-900 dark:text-[#ededed]">{lic.platform}</p>
+                                                <Badge variant="outline" className="mt-1 text-xs">{lic.plan_name}</Badge>
+                                            </div>
+                                            <div className="relative" ref={openMenuId === lic.id ? menuRef : undefined}>
+                                                <button
+                                                    onClick={() => setOpenMenuId(openMenuId === lic.id ? null : lic.id)}
+                                                    className="flex items-center justify-center h-8 w-8 rounded-md hover:bg-gray-100 dark:hover:bg-[#1a1a1a]"
+                                                >
+                                                    <MoreHorizontal className="h-4 w-4 text-gray-500" />
+                                                </button>
+                                                {openMenuId === lic.id && (
+                                                    <div className="absolute right-0 top-9 w-[160px] bg-white dark:bg-[#111111] border border-gray-200 dark:border-[#2e2e2e] rounded-lg shadow-lg z-[9999]">
+                                                        <div className="p-1">
+                                                            <button onClick={() => { setOpenMenuId(null); handleEdit(lic); }} className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-gray-700 dark:text-[#ededed] hover:bg-gray-50 dark:hover:bg-[#1a1a1a] rounded-md text-left">
+                                                                <Pencil className="h-4 w-4" /> Edit
+                                                            </button>
+                                                            <button onClick={() => { setOpenMenuId(null); handleDelete(lic.id); }} className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-md text-left">
+                                                                <Trash2 className="h-4 w-4" /> Delete
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-2 text-sm">
+                                            <div>
+                                                <p className="text-xs text-gray-500 dark:text-[#666666]">Seats</p>
+                                                <p className="font-medium">{lic.seats_used}/{lic.seats_purchased}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-500 dark:text-[#666666]">Utilization</p>
+                                                <p className={`font-medium ${getUtilColor(util)}`}>{util}%</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-500 dark:text-[#666666]">Cost/Seat</p>
+                                                <p className="font-medium">${Number(lic.cost_per_seat).toFixed(2)}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-500 dark:text-[#666666]">Monthly</p>
+                                                <p className="font-medium">${(Number(lic.cost_per_seat) * lic.seats_purchased).toLocaleString()}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-500 dark:text-[#666666]">Renewal</p>
+                                                <p className="font-medium">{lic.renewal_date ? new Date(lic.renewal_date).toLocaleDateString() : '—'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            }) : (
+                                <div className="text-center text-gray-500 dark:text-[#a1a1a1] py-8">No licenses match your filters.</div>
+                            )}
+                        </div>
+
+                        {/* Desktop view — table */}
+                        <div className="hidden md:block">
                         <Table>
                             <TableHeader className="bg-gray-50 dark:bg-[#111111]">
                                 <TableRow>
@@ -244,6 +307,7 @@ export const Licenses = () => {
                                 )}
                             </TableBody>
                         </Table>
+                        </div>
                     </CardContent>
                 </Card>
             )}

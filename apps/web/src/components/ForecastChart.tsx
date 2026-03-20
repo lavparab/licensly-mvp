@@ -128,7 +128,7 @@ export function ForecastChart() {
                 </div>
 
                 {/* Chart tabs */}
-                <div className="flex gap-1 mt-3 border-b border-gray-100 dark:border-[#2e2e2e]">
+                <div className="flex gap-1 mt-3 border-b border-gray-100 dark:border-[#2e2e2e] overflow-x-auto scrollbar-hide">
                     {tabs.map(tab => (
                         <button
                             key={tab.id}
