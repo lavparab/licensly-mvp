@@ -3,6 +3,7 @@ import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { useAuth } from '../../context/AuthContext';
 import { TooltipProvider } from '../ui/tooltip';
+import { AIQueryPanel } from '../AIQueryPanel';
 
 export function DashboardLayout() {
     const { session, isLoading } = useAuth();
@@ -35,6 +36,7 @@ export function DashboardLayout() {
                     </main>
                 </div>
             </div>
+            <AIQueryPanel />
         </TooltipProvider>
     );
 }

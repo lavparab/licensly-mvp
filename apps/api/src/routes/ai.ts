@@ -2,8 +2,28 @@ import { Router } from 'express';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { supabase } from '../utils/supabase';
 import { generateOptimizationRecommendations } from '../services/optimization';
+import { processNaturalLanguageQuery } from '../services/nlQuery';
 
 const router = Router();
+
+// POST /api/ai/query — Natural language query
+router.post('/query', requireAuth, async (req: AuthRequest, res) => {
+    try {
+        const orgId = req.orgId;
+        const { question } = req.body;
+
+        if (!question || question.trim().length === 0) {
+            return res.status(400).json({ error: 'Question is required' });
+        }
+
+        const answer = await processNaturalLanguageQuery(orgId!, question);
+        res.json(answer);
+    } catch (error: any) {
+        console.error('NL Query failed:', error);
+        res.status(500).json({ error: 'Failed to process query' });
+    }
+});
+
 
 // Trigger full AI organization analysis
 router.post('/analyze', requireAuth, async (req: AuthRequest, res) => {
