@@ -1,51 +1,63 @@
 import { Router } from 'express';
 import { requireAuth, AuthRequest } from '../middleware/auth';
-import { generateUtilizationPDF, generateRawDataExcel } from '../services/reports';
-import { validate } from '../middleware/validate';
-import { asyncHandler } from '../middleware/errorHandler';
-import { generateReportSchema } from '../types/schemas';
-import { supabase } from '../utils/supabase';
+import {
+    generateLicenseUtilizationPDF,
+    generateCostOptimizationPDF,
+    generateComplianceAuditPDF,
+    generateIntegrationSummaryPDF,
+    generateCSV
+} from '../services/reportGenerator';
 
 const router = Router();
 
-// List all generated reports for the organization
-router.get('/', requireAuth, asyncHandler(async (req: AuthRequest, res) => {
-    const orgId = req.orgId;
-    if (!orgId) throw new Error("Unauthorized");
+// POST /api/reports/generate — Generate PDF report
+router.post('/generate', requireAuth, async (req: AuthRequest, res) => {
+    try {
+        const orgId = req.orgId!;
+        const { type, format } = req.body;
 
-    const { data: reports, error } = await supabase
-        .from('reports')
-        .select('*')
-        .eq('org_id', orgId)
-        .order('created_at', { ascending: false });
+        if (!type || !format) {
+            return res.status(400).json({ error: 'type and format are required' });
+        }
 
-    if (error) throw error;
-    res.json({ reports });
-}));
+        if (format === 'csv') {
+            const csv = await generateCSV(orgId, type);
+            const filename = `licensly-${type}-report-${new Date().toISOString().split('T')[0]}.csv`;
+            res.setHeader('Content-Type', 'text/csv');
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+            return res.send(csv);
+        }
 
-// Generate and Download Report
-router.post('/generate', requireAuth, validate(generateReportSchema), asyncHandler(async (req: AuthRequest, res) => {
-    const { type, format } = req.body;
-    const orgId = req.orgId;
+        // PDF generation
+        let pdfBuffer: Buffer;
+        const filename = `licensly-${type}-report-${new Date().toISOString().split('T')[0]}.pdf`;
 
-    if (!orgId) throw new Error("Unauthorized");
+        switch (type) {
+            case 'utilization':
+                pdfBuffer = await generateLicenseUtilizationPDF(orgId);
+                break;
+            case 'optimization':
+                pdfBuffer = await generateCostOptimizationPDF(orgId);
+                break;
+            case 'compliance':
+                pdfBuffer = await generateComplianceAuditPDF(orgId);
+                break;
+            case 'integrations':
+                pdfBuffer = await generateIntegrationSummaryPDF(orgId);
+                break;
+            default:
+                return res.status(400).json({ error: 'Invalid report type' });
+        }
 
-    if (format === 'pdf') {
-        const pdfBuffer = await generateUtilizationPDF(orgId);
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=licensly-report-${Date.now()}.pdf`);
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.setHeader('Content-Length', String(pdfBuffer.length));
         res.send(pdfBuffer);
+
+    } catch (error: any) {
+        console.error('Report generation failed:', error);
+        res.status(500).json({ error: 'Failed to generate report' });
     }
-    else if (format === 'csv' || format === 'excel') {
-        const excelBuffer = await generateRawDataExcel(orgId);
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.setHeader('Content-Disposition', `attachment; filename=licensly-data-${Date.now()}.xlsx`);
-        res.send(excelBuffer);
-    }
-    else {
-        res.status(400).json({ error: "Unsupported format. Use 'pdf', 'csv', or 'excel'." });
-    }
-}));
+});
 
 export default router;
-
