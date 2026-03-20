@@ -11,6 +11,7 @@ import { Button } from '../components/ui/button';
 import { api } from '../lib/api';
 import { formatDistanceToNow, addDays, isBefore } from 'date-fns';
 import { toast } from 'sonner';
+import { ForecastChart } from '../components/ForecastChart';
 
 const CHART_COLORS = [
     '#3b82f6', // blue
@@ -273,6 +274,8 @@ export const Dashboard = () => {
                     </CardContent>
                 </Card>
             </div>
+
+            <ForecastChart />
 
             {/* Alerts & Renewals */}
             <div className="grid gap-4 md:grid-cols-2">
