@@ -16,9 +16,9 @@ export const updateLicenseSchema = z.object({
     platform: z.string().min(1).optional(),
     plan_name: z.string().min(1).optional(),
     name: z.string().min(1).optional(),
-    seats_purchased: z.number().int().min(0).optional(),
-    seats_used: z.number().int().min(0).optional(),
-    cost_per_seat: z.number().min(0).optional(),
+    seats_purchased: z.coerce.number().int().min(0).optional(),
+    seats_used: z.coerce.number().int().min(0).optional(),
+    cost_per_seat: z.coerce.number().min(0).optional(),
     billing_cycle: z.enum(['monthly', 'annual', 'quarterly', 'one-time']).optional(),
     renewal_date: z.string().optional(),
     vendor: z.string().optional(),
@@ -27,7 +27,7 @@ export const updateLicenseSchema = z.object({
     purchase_date: z.string().optional(),
     description: z.string().optional(),
     is_manual: z.boolean().optional(),
-});
+}).passthrough();
 
 // ── Organization / Settings Schemas ──
 
