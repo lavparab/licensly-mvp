@@ -5,8 +5,9 @@ import {
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Badge } from './ui/badge';
-import { TrendingUp, TrendingDown, DollarSign, Users, Loader2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Users } from 'lucide-react';
 import { api } from '../lib/api';
+import { CardLoader } from './LoadingScreen';
 
 const CHART_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4'];
 
@@ -57,9 +58,7 @@ export function ForecastChart() {
 
     if (loading) return (
         <Card className="bg-white dark:bg-[#111111] border-gray-200 dark:border-[#2e2e2e]">
-            <CardContent className="flex items-center justify-center h-64">
-                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-            </CardContent>
+            <CardLoader message="Generating cost forecast..." />
         </Card>
     );
 

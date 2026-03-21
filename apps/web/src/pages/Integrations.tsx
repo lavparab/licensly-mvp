@@ -4,6 +4,8 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Unplug, CheckCircle2, RotateCw, AlertCircle, Loader2, Link2Off, Plug, Users, UserX, Bot, GitCommit, GitPullRequest, Eye, Activity, ChevronDown, ChevronUp, Building, Globe, HardDrive, MessageSquare, LayoutGrid, Palette, Video, Github, Brush, Mail } from 'lucide-react';
+import { LoadingScreen } from '../components/LoadingScreen';
+import { EmptyState } from '../components/EmptyState';
 import { api } from '../lib/api';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
@@ -1121,9 +1123,7 @@ export const Integrations = () => {
             </div>
 
             {isLoading ? (
-                <div className="flex justify-center items-center h-48">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                </div>
+                <LoadingScreen />
             ) : (
                 <>
                     {/* Connected */}
@@ -1248,11 +1248,13 @@ export const Integrations = () => {
                     )}
 
                     {integrations.length === 0 && availablePlatforms.length === ALL_PLATFORMS.length && (
-                        <Card className="flex flex-col items-center justify-center p-12 text-center border-dashed">
-                            <div className="bg-muted p-4 rounded-full mb-4"><Unplug className="h-8 w-8 text-muted-foreground" /></div>
-                            <CardTitle className="text-xl mb-2">No integrations connected</CardTitle>
-                            <CardDescription className="max-w-md mb-6">Connect your first SaaS platform to start tracking licenses and usage.</CardDescription>
-                        </Card>
+                        <EmptyState
+                            icon={Plug}
+                            title="No integrations connected"
+                            description="Connect your first SaaS platform to start syncing license and usage data automatically."
+                            actionLabel="Browse Integrations"
+                            onAction={() => document.getElementById('available-platforms')?.scrollIntoView({ behavior: 'smooth' })}
+                        />
                     )}
                 </>
             )}

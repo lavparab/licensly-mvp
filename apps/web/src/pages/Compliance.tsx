@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { AlertCircle, ShieldCheck, Calendar, Bell, CheckCircle2, Loader2 } from 'lucide-react';
+import { LoadingScreen } from '../components/LoadingScreen';
 import { api } from '../lib/api';
 import { format, formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
@@ -84,7 +85,7 @@ export const Compliance = () => {
         }
     };
 
-    if (isLoading) return <div className="flex h-[80vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+    if (isLoading) return <LoadingScreen />;
 
     return (
         <div className="flex flex-col gap-6">

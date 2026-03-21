@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { Check, X, TrendingDown, Trash2, GitMerge, DollarSign, Loader2 } from 'lucide-react';
+import { Check, X, TrendingDown, Trash2, GitMerge, DollarSign, Loader2, Sparkles } from 'lucide-react';
+import { LoadingScreen } from '../components/LoadingScreen';
+import { EmptyState } from '../components/EmptyState';
 import { api } from '../lib/api';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
@@ -99,7 +101,7 @@ export const Optimization = () => {
         }
     };
 
-    if (isLoading) return <div className="flex h-[80vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+    if (isLoading) return <LoadingScreen />;
 
     return (
         <div className="flex flex-col gap-6">
@@ -175,11 +177,13 @@ export const Optimization = () => {
                         </div>
                     </Card>
                 )) : (
-                    <div className="flex flex-col items-center justify-center p-12 text-center border rounded-lg bg-card dark:bg-[#111111] dark:border-[#2e2e2e]">
-                        <div className="bg-muted p-4 rounded-full mb-4"><Check className="h-8 w-8 text-green-500" /></div>
-                        <h3 className="text-lg font-medium">All optimized!</h3>
-                        <p className="text-muted-foreground max-w-sm mt-2">No pending recommendations. Connect more integrations or check back later.</p>
-                    </div>
+                    <EmptyState
+                        icon={Sparkles}
+                        title="All optimized!"
+                        description="No pending recommendations. Run an AI analysis to discover cost saving opportunities across your licenses."
+                        actionLabel="Run AI Analysis"
+                        onAction={handleRunAnalysis}
+                    />
                 )}
             </div>
         </div>

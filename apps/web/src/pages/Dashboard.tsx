@@ -5,7 +5,8 @@ import {
     BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell, Legend
 } from 'recharts';
-import { AlertCircle, CreditCard, Users, Tag, Loader2, RotateCw, Download, Activity } from 'lucide-react';
+import { AlertCircle, CreditCard, Users, Tag, Loader2, RotateCw, Download, Activity, BarChart3, PieChart as PieChartIcon } from 'lucide-react';
+import { EmptyState } from '../components/EmptyState';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { api } from '../lib/api';
@@ -156,9 +157,30 @@ export const Dashboard = () => {
 
     if (isLoading) {
         return (
-            <div className="flex h-[80vh] items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
+            <>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <div className="h-8 w-32 bg-gray-200 dark:bg-[#2e2e2e] rounded animate-pulse mb-2" />
+                        <div className="h-4 w-56 bg-gray-100 dark:bg-[#1a1a1a] rounded animate-pulse" />
+                    </div>
+                </div>
+                <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
+                    {[...Array(5)].map((_, i) => (
+                        <div key={i} className="bg-white dark:bg-[#111111] border border-gray-200 dark:border-[#2e2e2e] rounded-lg p-5 animate-pulse">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="h-3 w-24 bg-gray-200 dark:bg-[#2e2e2e] rounded" />
+                                <div className="h-4 w-4 bg-gray-200 dark:bg-[#2e2e2e] rounded" />
+                            </div>
+                            <div className="h-7 w-32 bg-gray-200 dark:bg-[#2e2e2e] rounded mb-2" />
+                            <div className="h-2.5 w-20 bg-gray-100 dark:bg-[#1a1a1a] rounded" />
+                        </div>
+                    ))}
+                </div>
+                <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
+                    <div className="col-span-1 lg:col-span-4 h-80 bg-white dark:bg-[#111111] border border-gray-200 dark:border-[#2e2e2e] rounded-lg animate-pulse" />
+                    <div className="col-span-1 lg:col-span-3 h-80 bg-white dark:bg-[#111111] border border-gray-200 dark:border-[#2e2e2e] rounded-lg animate-pulse" />
+                </div>
+            </>
         );
     }
 
@@ -276,9 +298,13 @@ export const Dashboard = () => {
                                     </BarChart>
                                 </ResponsiveContainer>
                                 )})() : (
-                                <div className="flex h-full items-center justify-center text-gray-500 dark:text-zinc-400 text-[13px] border border-dashed border-[#e8e8e8] dark:border-[#2a2a2a] rounded-[6px]">
-                                    <div className="text-center"><p>No spend data yet.</p><Button variant="link" className="mt-1" onClick={() => navigate('/integrations')}>Connect integrations</Button></div>
-                                </div>
+                                <EmptyState
+                                    icon={BarChart3}
+                                    title="No spend data yet"
+                                    description="Connect your first integration to start tracking platform costs and generate spend analytics."
+                                    actionLabel="Connect Integration"
+                                    onAction={() => navigate('/integrations')}
+                                />
                             )}
                         </div>
                     </CardContent>
@@ -302,7 +328,13 @@ export const Dashboard = () => {
                                     </PieChart>
                                 </ResponsiveContainer>
                             ) : (
-                                <div className="flex h-full items-center justify-center text-gray-500 dark:text-zinc-400 text-[13px] border border-dashed border-[#e8e8e8] dark:border-[#2a2a2a] rounded-[6px]">No seat data.</div>
+                                <EmptyState
+                                    icon={PieChartIcon}
+                                    title="No seat data"
+                                    description="Seat utilization will appear once you connect integrations and sync license data."
+                                    actionLabel="Go to Integrations"
+                                    onAction={() => navigate('/integrations')}
+                                />
                             )}
                         </div>
                     </CardContent>

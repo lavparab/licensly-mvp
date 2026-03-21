@@ -5,6 +5,8 @@ import { Button } from '../components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Badge } from '../components/ui/badge';
 import { Search, Download, Loader2, FileX, ArrowUpDown, Key, Plus, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { LoadingScreen } from '../components/LoadingScreen';
+import { EmptyState } from '../components/EmptyState';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -137,7 +139,7 @@ export const Licenses = () => {
         </TableHead>
     );
 
-    if (isLoading) return <div className="flex h-[80vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+    if (isLoading) return <LoadingScreen />;
 
     return (
         <div className="flex flex-col gap-6">
@@ -157,12 +159,15 @@ export const Licenses = () => {
             </div>
 
             {licenses.length === 0 ? (
-                <Card className="flex flex-col items-center justify-center p-12 text-center border-dashed bg-white dark:bg-[#1a1a1a] dark:border-[#2a2a2a]">
-                    <div className="bg-muted p-4 rounded-full mb-4"><FileX className="h-8 w-8 text-muted-foreground" /></div>
-                    <CardTitle className="text-xl mb-2">No licenses tracked yet</CardTitle>
-                    <CardDescription className="max-w-md mb-6">Connect integrations to auto-discover your licenses, or add them during onboarding.</CardDescription>
-                    <Button onClick={() => navigate('/integrations')}>Connect Integrations</Button>
-                </Card>
+                <EmptyState
+                    icon={Key}
+                    title="No licenses tracked yet"
+                    description="Connect your SaaS integrations to automatically discover licenses, or add them manually to get started."
+                    actionLabel="Connect Integrations"
+                    onAction={() => navigate('/integrations')}
+                    secondaryLabel="Add Manually"
+                    onSecondary={() => setShowAddModal(true)}
+                />
             ) : (
                 <Card className="bg-white dark:bg-[#111111] border border-gray-200 dark:border-[#2e2e2e]">
                     <CardHeader>
