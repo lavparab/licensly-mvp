@@ -3,8 +3,20 @@ import { requireAuth, AuthRequest } from '../middleware/auth';
 import { supabase } from '../utils/supabase';
 import { generateOptimizationRecommendations } from '../services/optimization';
 import { processNaturalLanguageQuery } from '../services/nlQuery';
+import { generateBenchmarks } from '../services/benchmarks';
 
 const router = Router();
+
+// GET /api/ai/benchmarks — Industry benchmarking analysis
+router.get('/benchmarks', requireAuth, async (req: AuthRequest, res) => {
+    try {
+        const orgId = req.orgId!;
+        const benchmarks = await generateBenchmarks(orgId);
+        res.json(benchmarks);
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
 
 // POST /api/ai/query — Natural language query
 router.post('/query', requireAuth, async (req: AuthRequest, res) => {
