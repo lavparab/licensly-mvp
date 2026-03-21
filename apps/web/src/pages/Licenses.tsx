@@ -131,7 +131,7 @@ export const Licenses = () => {
     const getUtilColor = (pct: number) => pct >= 90 ? 'text-red-600' : pct >= 70 ? 'text-yellow-600' : 'text-green-600';
 
     const SortHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
-        <TableHead className="cursor-pointer select-none hover:bg-muted/50" onClick={() => handleSort(field)}>
+        <TableHead className="cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-[#1a1a1a]" onClick={() => handleSort(field)}>
             <div className="flex items-center gap-1">
                 {children}
                 <ArrowUpDown className={`h-3 w-3 ${sortField === field ? 'text-primary' : 'text-muted-foreground/40'}`} />
