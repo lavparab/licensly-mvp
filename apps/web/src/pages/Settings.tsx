@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
-import { Badge } from '../components/ui/badge';
-import { Building2, CreditCard, Shield, Users, Save, Loader2, Moon, Sun, Monitor } from 'lucide-react';
+import { Building2, CreditCard, Shield, Users, Loader2, Moon, Sun, Monitor } from 'lucide-react';
+import { LoadingScreen } from '../components/LoadingScreen';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
@@ -17,11 +17,8 @@ export const Settings = () => {
     const [isSavingProfile, setIsSavingProfile] = useState(false);
 
     // Form states
-    const [orgData, setOrgData] = useState({ id: '', name: '', domain: '', plan: '' });
-    const [profileData, setProfileData] = useState({ id: '', email: '', role: '', avatar_url: '' });
-
-    // Avatar preview state
-    const [avatarInput, setAvatarInput] = useState('');
+    const [orgData, setOrgData] = useState({ id: '', name: '', domain: '', plan: '', company_size: '', industry: '' });
+    const [profileData, setProfileData] = useState({ id: '', email: '', role: '', full_name: '' });
 
     useEffect(() => {
         if (user) fetchSettingsData();
@@ -40,16 +37,17 @@ export const Settings = () => {
                     id: profile.id,
                     email: profile.email,
                     role: profile.role,
-                    avatar_url: profile.avatar_url || ''
+                    full_name: profile.full_name || ''
                 });
-                setAvatarInput(profile.avatar_url || '');
 
                 if (profile.organizations) {
                     setOrgData({
                         id: profile.organizations.id,
                         name: profile.organizations.name,
                         domain: profile.organizations.domain || '',
-                        plan: profile.organizations.plan
+                        plan: profile.organizations.plan,
+                        company_size: profile.organizations.company_size || '',
+                        industry: profile.organizations.industry || '',
                     });
                 }
             }
@@ -66,7 +64,7 @@ export const Settings = () => {
         try {
             await supabase
                 .from('organizations')
-                .update({ name: orgData.name, domain: orgData.domain })
+                .update({ name: orgData.name, domain: orgData.domain, company_size: orgData.company_size, industry: orgData.industry })
                 .eq('id', orgData.id);
             toast.success('Organization settings saved');
         } catch (error) {
@@ -80,9 +78,8 @@ export const Settings = () => {
         try {
             await supabase
                 .from('users')
-                .update({ avatar_url: avatarInput })
+                .update({ full_name: profileData.full_name })
                 .eq('id', profileData.id);
-            setProfileData(prev => ({ ...prev, avatar_url: avatarInput }));
             toast.success('Profile settings saved');
         } catch (error) {
             toast.error('Failed to save profile settings');
@@ -90,11 +87,12 @@ export const Settings = () => {
         setIsSavingProfile(false);
     };
 
-    if (isLoading) return <div className="flex h-[80vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+    if (isLoading) return <LoadingScreen />;
 
-    const getInitials = (email: string) => {
-        return email ? email.substring(0, 2).toUpperCase() : 'US';
-    };
+    // Avatar shows initials from full_name or email
+    const initials = profileData.full_name
+        ? profileData.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+        : user?.email?.charAt(0).toUpperCase() || 'U';
 
     return (
         <div className="flex flex-col gap-6 max-w-4xl">
@@ -105,149 +103,174 @@ export const Settings = () => {
 
             <div className="grid gap-6">
                 {/* Organization Settings */}
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-2">
-                            <Building2 className="h-5 w-5 text-muted-foreground" />
-                            <CardTitle>Organization</CardTitle>
-                        </div>
-                        <CardDescription>Update your company's details.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Company Name</label>
+                <div className="bg-white dark:bg-[#111111] border border-gray-200 dark:border-[#2e2e2e] rounded-xl p-6">
+                    <div className="flex items-center gap-2 mb-1">
+                        <Building2 className="h-5 w-5 text-muted-foreground" />
+                        <h2 className="text-lg font-semibold">Organization</h2>
+                    </div>
+                    <p className="text-[13px] text-gray-500 dark:text-[#666666] mb-6">Update your company's details.</p>
+
+                    <div className="space-y-4">
+                        <div className="space-y-1.5">
+                            <label className="text-[13px] font-medium text-gray-700 dark:text-[#a1a1a1]">Company Name</label>
                             <Input
                                 value={orgData.name}
                                 onChange={(e) => setOrgData({ ...orgData, name: e.target.value })}
+                                className="h-10 text-[13px] bg-white dark:bg-[#1a1a1a] border-gray-200 dark:border-[#2e2e2e] text-gray-900 dark:text-[#ededed]"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Primary Domain</label>
+                        <div className="space-y-1.5">
+                            <label className="text-[13px] font-medium text-gray-700 dark:text-[#a1a1a1]">Primary Domain</label>
                             <Input
                                 value={orgData.domain}
                                 onChange={(e) => setOrgData({ ...orgData, domain: e.target.value })}
                                 placeholder="example.com"
+                                className="h-10 text-[13px] bg-white dark:bg-[#1a1a1a] border-gray-200 dark:border-[#2e2e2e] text-gray-900 dark:text-[#ededed]"
                             />
                         </div>
-                        <div className="pt-2">
-                            <label className="text-sm font-medium block mb-2">Current Plan</label>
-                            <Badge variant="secondary" className="uppercase">{orgData.plan}</Badge>
+
+                        {/* Company Size */}
+                        <div className="space-y-1.5">
+                            <label className="text-[13px] font-medium text-gray-700 dark:text-[#a1a1a1]">Company Size</label>
+                            <select
+                                value={orgData.company_size || ''}
+                                onChange={e => setOrgData({ ...orgData, company_size: e.target.value })}
+                                className="w-full h-10 rounded-lg border border-gray-200 dark:border-[#2e2e2e] bg-white dark:bg-[#1a1a1a] text-gray-900 dark:text-[#ededed] px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                            >
+                                <option value="">Select size</option>
+                                <option value="1-50">1-50 employees</option>
+                                <option value="51-200">51-200 employees</option>
+                                <option value="201-1000">201-1000 employees</option>
+                                <option value="1000+">1000+ employees</option>
+                            </select>
                         </div>
-                    </CardContent>
-                    <CardFooter className="border-t px-6 py-4">
-                        <Button onClick={handleSaveOrganization} disabled={isSavingOrg}>
-                            {isSavingOrg ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                            Save Organization
+
+                        {/* Industry */}
+                        <div className="space-y-1.5">
+                            <label className="text-[13px] font-medium text-gray-700 dark:text-[#a1a1a1]">Industry</label>
+                            <select
+                                value={orgData.industry || ''}
+                                onChange={e => setOrgData({ ...orgData, industry: e.target.value })}
+                                className="w-full h-10 rounded-lg border border-gray-200 dark:border-[#2e2e2e] bg-white dark:bg-[#1a1a1a] text-gray-900 dark:text-[#ededed] px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                            >
+                                <option value="">Select industry</option>
+                                {['Technology', 'Finance', 'Healthcare', 'Education', 'Retail', 'Manufacturing', 'Media & Entertainment', 'Legal', 'Non-Profit', 'Other'].map(ind => (
+                                    <option key={ind} value={ind}>{ind}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="border-t border-gray-200 dark:border-[#2e2e2e] mt-6 pt-4">
+                        <Button onClick={handleSaveOrganization} disabled={isSavingOrg} className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white h-9 px-4 text-[13px] rounded-lg">
+                            {isSavingOrg && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Save Changes
                         </Button>
-                    </CardFooter>
-                </Card>
+                    </div>
+                </div>
 
                 {/* Profile Settings */}
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-2">
-                            <Users className="h-5 w-5 text-muted-foreground" />
-                            <CardTitle>Personal Profile</CardTitle>
-                        </div>
-                        <CardDescription>Manage your personal information and preferences.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
+                <div className="bg-white dark:bg-[#111111] border border-gray-200 dark:border-[#2e2e2e] rounded-xl p-6">
+                    <div className="flex items-center gap-2 mb-1">
+                        <Users className="h-5 w-5 text-muted-foreground" />
+                        <h2 className="text-lg font-semibold">Personal Profile</h2>
+                    </div>
+                    <p className="text-[13px] text-gray-500 dark:text-[#666666] mb-6">Manage your personal information and preferences.</p>
+
+                    <div className="space-y-6">
                         <div className="flex items-center gap-6">
-                            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-muted text-2xl font-semibold overflow-hidden border">
-                                {avatarInput ? (
-                                    <img src={avatarInput} alt="Avatar" className="h-full w-full object-cover" />
-                                ) : (
-                                    getInitials(profileData.email)
-                                )}
+                            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#2563eb]/10 text-[#2563eb] text-xl font-semibold border border-[#2563eb]/20">
+                                {initials}
                             </div>
-                            <div className="space-y-2 flex-1 max-w-sm">
-                                <label className="text-sm font-medium">Avatar URL</label>
+                            <div className="space-y-1.5 flex-1 max-w-sm">
+                                <label className="text-[13px] font-medium text-gray-700 dark:text-[#a1a1a1]">Full Name</label>
                                 <Input
-                                    value={avatarInput}
-                                    onChange={(e) => setAvatarInput(e.target.value)}
-                                    placeholder="https://example.com/avatar.png"
+                                    value={profileData.full_name || ''}
+                                    onChange={e => setProfileData({ ...profileData, full_name: e.target.value })}
+                                    placeholder="e.g. John Smith"
+                                    className="h-10 text-[13px] bg-white dark:bg-[#1a1a1a] border-gray-200 dark:border-[#2e2e2e] text-gray-900 dark:text-[#ededed]"
                                 />
-                                <p className="text-xs text-muted-foreground">Provide a URL for your profile picture.</p>
                             </div>
                         </div>
 
                         <div className="grid gap-4 md:grid-cols-2">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Email Address</label>
-                                <Input value={profileData.email} disabled className="bg-muted cursor-not-allowed" />
+                            <div className="space-y-1.5">
+                                <label className="text-[13px] font-medium text-gray-700 dark:text-[#a1a1a1]">Email Address</label>
+                                <Input value={profileData.email} disabled className="h-10 text-[13px] bg-gray-50 dark:bg-[#0a0a0a] border-gray-200 dark:border-[#2e2e2e] text-gray-500 dark:text-[#666666] cursor-not-allowed" />
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Role</label>
-                                <div className="h-10 px-3 py-2 border rounded-md bg-muted text-sm text-muted-foreground capitalize flex items-center">
+                            <div className="space-y-1.5">
+                                <label className="text-[13px] font-medium text-gray-700 dark:text-[#a1a1a1]">Role</label>
+                                <div className="h-10 px-3 py-2 border border-gray-200 dark:border-[#2e2e2e] rounded-lg bg-gray-50 dark:bg-[#0a0a0a] text-[13px] text-gray-500 dark:text-[#666666] capitalize flex items-center">
                                     {profileData.role === 'admin' && <Shield className="h-4 w-4 mr-2" />}
                                     {profileData.role}
                                 </div>
                             </div>
                         </div>
-                    </CardContent>
-                    <CardFooter className="border-t px-6 py-4">
-                        <Button onClick={handleSaveProfile} disabled={isSavingProfile}>
-                            {isSavingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                            Save Profile
+                    </div>
+
+                    <div className="border-t border-gray-200 dark:border-[#2e2e2e] mt-6 pt-4">
+                        <Button onClick={handleSaveProfile} disabled={isSavingProfile} className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white h-9 px-4 text-[13px] rounded-lg">
+                            {isSavingProfile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Save Changes
                         </Button>
-                    </CardFooter>
-                </Card>
+                    </div>
+                </div>
 
                 {/* Preferences */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>App Preferences</CardTitle>
-                        <CardDescription>Customize how Licensly looks and feels.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium block mb-2">Theme</label>
-                            <div className="flex flex-wrap gap-2">
-                                <Button
-                                    variant={theme === 'light' ? 'default' : 'outline'}
-                                    onClick={() => setTheme('light')}
-                                    className="w-32"
-                                >
-                                    <Sun className="mr-2 h-4 w-4" /> Light
-                                </Button>
-                                <Button
-                                    variant={theme === 'dark' ? 'default' : 'outline'}
-                                    onClick={() => setTheme('dark')}
-                                    className="w-32"
-                                >
-                                    <Moon className="mr-2 h-4 w-4" /> Dark
-                                </Button>
-                                <Button
-                                    variant={theme === 'system' ? 'default' : 'outline'}
-                                    onClick={() => setTheme('system')}
-                                    className="w-32"
-                                >
-                                    <Monitor className="mr-2 h-4 w-4" /> System
-                                </Button>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                <div className="bg-white dark:bg-[#111111] border border-gray-200 dark:border-[#2e2e2e] rounded-xl p-6">
+                    <h2 className="text-lg font-semibold mb-1">App Preferences</h2>
+                    <p className="text-[13px] text-gray-500 dark:text-[#666666] mb-6">Customize how Licensly looks and feels.</p>
 
-                {/* Billing (Disabled for MVP) */}
-                <Card className="opacity-60 cursor-not-allowed">
-                    <CardHeader>
-                        <div className="flex items-center gap-2">
-                            <CreditCard className="h-5 w-5 text-muted-foreground" />
-                            <CardTitle>Billing & Subscription</CardTitle>
+                    <div className="space-y-1.5">
+                        <label className="text-[13px] font-medium text-gray-700 dark:text-[#a1a1a1] block mb-2">Theme</label>
+                        <div className="flex flex-wrap gap-2">
+                            <Button
+                                variant={theme === 'light' ? 'default' : 'outline'}
+                                onClick={() => setTheme('light')}
+                                className="w-32"
+                            >
+                                <Sun className="mr-2 h-4 w-4" /> Light
+                            </Button>
+                            <Button
+                                variant={theme === 'dark' ? 'default' : 'outline'}
+                                onClick={() => setTheme('dark')}
+                                className="w-32"
+                            >
+                                <Moon className="mr-2 h-4 w-4" /> Dark
+                            </Button>
+                            <Button
+                                variant={theme === 'system' ? 'default' : 'outline'}
+                                onClick={() => setTheme('system')}
+                                className="w-32"
+                            >
+                                <Monitor className="mr-2 h-4 w-4" /> System
+                            </Button>
                         </div>
-                        <CardDescription>Manage your Licensly payment methods (Coming soon).</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex items-center justify-between border rounded-lg p-4">
-                            <div>
-                                <p className="font-medium">Enterprise Plan</p>
-                                <p className="text-sm text-muted-foreground">Billed annually</p>
-                            </div>
-                            <Button disabled variant="outline">Manage Billing</Button>
+                    </div>
+                </div>
+
+                {/* Billing */}
+                <div className="bg-white dark:bg-[#111111] border border-gray-200 dark:border-[#2e2e2e] rounded-xl p-6">
+                    <div className="flex items-center gap-2 mb-1">
+                        <CreditCard className="h-5 w-5 text-muted-foreground" />
+                        <h2 className="text-lg font-semibold">Billing & Subscription</h2>
+                    </div>
+                    <p className="text-[13px] text-gray-500 dark:text-[#666666] mb-6">Manage your Licensly subscription and payment methods.</p>
+
+                    <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#1a1a1a] rounded-lg border border-gray-200 dark:border-[#2e2e2e]">
+                        <div>
+                            <p className="text-[13px] font-medium text-gray-900 dark:text-[#ededed] capitalize">
+                                {orgData.plan || 'Free'} Plan
+                            </p>
+                            <p className="text-[12px] text-gray-500 dark:text-[#666666] mt-0.5">
+                                {orgData.plan === 'free' || !orgData.plan ? 'Upgrade to unlock advanced features' : 'Billed annually'}
+                            </p>
                         </div>
-                    </CardContent>
-                </Card>
+                        <Button variant="outline" className="text-[13px] h-9 rounded-lg dark:border-[#2e2e2e]">
+                            {orgData.plan === 'free' || !orgData.plan ? 'Upgrade Plan' : 'Manage Billing'}
+                        </Button>
+                    </div>
+                </div>
             </div>
         </div>
     );
