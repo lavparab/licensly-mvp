@@ -128,7 +128,13 @@ export const Licenses = () => {
     };
 
     const getUtilization = (used: number, total: number) => total === 0 ? 0 : Math.round((used / total) * 100);
-    const getUtilColor = (pct: number) => pct >= 90 ? 'text-red-600' : pct >= 70 ? 'text-yellow-600' : 'text-green-600';
+    const getUtilColor = (pct: number) => {
+        if (pct === 0) return 'text-gray-400 dark:text-[#666666]';      // 0% — gray, no data
+        if (pct >= 90) return 'text-red-500';                            // 90-100% — red, overutilized
+        if (pct >= 70) return 'text-green-600 dark:text-green-400';      // 70-89% — green, healthy
+        if (pct >= 40) return 'text-amber-500';                          // 40-69% — amber, underutilized
+        return 'text-red-500';                                           // <40% — red, wasted spend
+    };
 
     const SortHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
         <TableHead className="cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-[#1a1a1a]" onClick={() => handleSort(field)}>
@@ -250,68 +256,68 @@ export const Licenses = () => {
 
                         {/* Desktop view — table */}
                         <div className="hidden md:block">
-                        <Table>
-                            <TableHeader className="bg-gray-50 dark:bg-[#111111]">
-                                <TableRow>
-                                    <SortHeader field="platform">Platform</SortHeader>
-                                    <TableHead>Plan</TableHead>
-                                    <SortHeader field="seats_purchased">Seats</SortHeader>
-                                    <SortHeader field="utilization">Utilization</SortHeader>
-                                    <SortHeader field="cost_per_seat">Cost/Seat</SortHeader>
-                                    <TableHead>Monthly</TableHead>
-                                    <SortHeader field="renewal_date">Renewal</SortHeader>
-                                    <TableHead className="w-[50px]"></TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filtered.length > 0 ? filtered.map(lic => {
-                                    const util = getUtilization(lic.seats_used, lic.seats_purchased);
-                                    return (
-                                        <TableRow key={lic.id} className="hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors">
-                                            <TableCell className="font-medium text-gray-900 dark:text-[#ededed]">{lic.platform}</TableCell>
-                                            <TableCell><Badge variant="outline" className="dark:border-[#2e2e2e] dark:text-[#a1a1a1]">{lic.plan_name}</Badge></TableCell>
-                                            <TableCell className="text-gray-900 dark:text-[#ededed]">{lic.seats_used} / {lic.seats_purchased}</TableCell>
-                                            <TableCell><span className={`font-medium ${getUtilColor(util)}`}>{util}%</span></TableCell>
-                                            <TableCell className="text-gray-900 dark:text-[#ededed]">${Number(lic.cost_per_seat).toFixed(2)}</TableCell>
-                                            <TableCell className="font-medium text-gray-900 dark:text-[#ededed]">${(Number(lic.cost_per_seat) * lic.seats_purchased).toLocaleString()}</TableCell>
-                                            <TableCell className="text-gray-900 dark:text-[#ededed]">{lic.renewal_date ? new Date(lic.renewal_date).toLocaleDateString() : '—'}</TableCell>
-                                            <TableCell>
-                                                <div className="relative" ref={openMenuId === lic.id ? menuRef : undefined}>
-                                                    <button
-                                                        onClick={() => setOpenMenuId(openMenuId === lic.id ? null : lic.id)}
-                                                        className="flex items-center justify-center h-8 w-8 rounded-md hover:bg-gray-100 transition-colors"
-                                                    >
-                                                        <MoreHorizontal className="h-4 w-4 text-gray-500" />
-                                                    </button>
-                                                    {openMenuId === lic.id && (
-                                                        <div className="absolute right-0 top-9 w-[160px] bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]">
-                                                            <div className="p-1">
-                                                                <button
-                                                                    onClick={() => { setOpenMenuId(null); handleEdit(lic); }}
-                                                                    className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-gray-700 hover:bg-gray-50 rounded-md transition-colors text-left"
-                                                                >
-                                                                    <Pencil className="h-4 w-4 text-gray-500" /> Edit
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => { setOpenMenuId(null); handleDelete(lic.id); }}
-                                                                    className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-red-600 hover:bg-red-50 rounded-md transition-colors text-left"
-                                                                >
-                                                                    <Trash2 className="h-4 w-4" /> Delete
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                }) : (
+                            <Table>
+                                <TableHeader className="bg-gray-50 dark:bg-[#111111]">
                                     <TableRow>
-                                        <TableCell colSpan={8} className="text-center text-gray-500 dark:text-[#a1a1a1] py-8">No licenses match your filters.</TableCell>
+                                        <SortHeader field="platform">Platform</SortHeader>
+                                        <TableHead>Plan</TableHead>
+                                        <SortHeader field="seats_purchased">Seats</SortHeader>
+                                        <SortHeader field="utilization">Utilization</SortHeader>
+                                        <SortHeader field="cost_per_seat">Cost/Seat</SortHeader>
+                                        <TableHead>Monthly</TableHead>
+                                        <SortHeader field="renewal_date">Renewal</SortHeader>
+                                        <TableHead className="w-[50px]"></TableHead>
                                     </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
+                                </TableHeader>
+                                <TableBody>
+                                    {filtered.length > 0 ? filtered.map(lic => {
+                                        const util = getUtilization(lic.seats_used, lic.seats_purchased);
+                                        return (
+                                            <TableRow key={lic.id} className="hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors">
+                                                <TableCell className="font-medium text-gray-900 dark:text-[#ededed]">{lic.platform}</TableCell>
+                                                <TableCell><Badge variant="outline" className="dark:border-[#2e2e2e] dark:text-[#a1a1a1]">{lic.plan_name}</Badge></TableCell>
+                                                <TableCell className="text-gray-900 dark:text-[#ededed]">{lic.seats_used} / {lic.seats_purchased}</TableCell>
+                                                <TableCell><span className={`font-medium ${getUtilColor(util)}`}>{util}%</span></TableCell>
+                                                <TableCell className="text-gray-900 dark:text-[#ededed]">${Number(lic.cost_per_seat).toFixed(2)}</TableCell>
+                                                <TableCell className="font-medium text-gray-900 dark:text-[#ededed]">${(Number(lic.cost_per_seat) * lic.seats_purchased).toLocaleString()}</TableCell>
+                                                <TableCell className="text-gray-900 dark:text-[#ededed]">{lic.renewal_date ? new Date(lic.renewal_date).toLocaleDateString() : '—'}</TableCell>
+                                                <TableCell>
+                                                    <div className="relative" ref={openMenuId === lic.id ? menuRef : undefined}>
+                                                        <button
+                                                            onClick={() => setOpenMenuId(openMenuId === lic.id ? null : lic.id)}
+                                                            className="flex items-center justify-center h-8 w-8 rounded-md hover:bg-gray-100 transition-colors"
+                                                        >
+                                                            <MoreHorizontal className="h-4 w-4 text-gray-500" />
+                                                        </button>
+                                                        {openMenuId === lic.id && (
+                                                            <div className="absolute right-0 top-9 w-[160px] bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]">
+                                                                <div className="p-1">
+                                                                    <button
+                                                                        onClick={() => { setOpenMenuId(null); handleEdit(lic); }}
+                                                                        className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-gray-700 hover:bg-gray-50 rounded-md transition-colors text-left"
+                                                                    >
+                                                                        <Pencil className="h-4 w-4 text-gray-500" /> Edit
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => { setOpenMenuId(null); handleDelete(lic.id); }}
+                                                                        className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-red-600 hover:bg-red-50 rounded-md transition-colors text-left"
+                                                                    >
+                                                                        <Trash2 className="h-4 w-4" /> Delete
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    }) : (
+                                        <TableRow>
+                                            <TableCell colSpan={8} className="text-center text-gray-500 dark:text-[#a1a1a1] py-8">No licenses match your filters.</TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
                         </div>
                     </CardContent>
                 </Card>

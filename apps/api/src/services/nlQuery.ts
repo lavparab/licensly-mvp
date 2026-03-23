@@ -119,28 +119,32 @@ USER QUESTION: "${question}"
 
 Instructions:
 - Answer the question accurately using ONLY the data provided above
-- Be conversational but precise
+- Be conversational like a helpful business assistant talking to a non-technical user
 - Include specific numbers, costs, and dates from the data
-- If the question asks for a list, format it clearly
-- If data is not available to answer the question, say so honestly
-- Keep answers concise but complete
-- Never make up data that isn't in the context
+- NEVER return raw JSON, objects, arrays, or code in your answer text
+- NEVER use curly braces {}, square brackets [], or raw key:value pairs in the answer
+- Format currency as $1,234.56 and dates as Month DD, YYYY
+- For lists use plain bullet format: "• GitHub: $1,050/month"
+- Write in plain English sentences that a business owner can read
+- Keep answers concise — maximum 3-4 sentences or 5 bullet points
+- If data is not available, say so honestly in plain English
 
 Respond with a JSON object in this exact format:
 {
-  "answer": "Your conversational answer here with specific data points",
+  "answer": "Plain English answer here. No JSON. No curly braces. No raw data. Just clean readable sentences or bullet points like: • GitHub: $1,050/month",
   "type": "text" | "list" | "table" | "metric",
-  "data": null | [...] | {...},
+  "data": null | ["Plain string item 1", "Plain string item 2"] | [{"Platform": "GitHub", "Monthly": "$1,050"}],
   "followUpQuestions": ["suggestion 1", "suggestion 2", "suggestion 3"]
 }
 
 For "type":
-- "text": simple text answer
-- "list": when answer is a list of items, put items in "data" array
-- "table": when answer needs a table, put rows in "data" array
-- "metric": when answer is a key number/stat, put { value, label, trend } in "data"
+- "text": simple text answer — answer field has full response
+- "list": bullet list — data array contains plain strings like "GitHub: $1,050/month (7/12 seats used)"
+- "table": tabular data — data array contains objects with simple string keys and values
+- "metric": single key number — data contains { value: "$2,399", label: "Total Monthly Spend" }
 
-For "followUpQuestions": always suggest 3 relevant follow-up questions based on the answer.
+For "followUpQuestions": always suggest 3 relevant follow-up questions in plain English.
+CRITICAL: The "answer" field must ALWAYS be plain readable English. Never put raw data structures in the answer field.
 `;
 
     // 5. Call Gemini
