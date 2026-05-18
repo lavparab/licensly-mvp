@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import WebSocket from 'ws';
 
 dotenv.config();
 
@@ -13,10 +14,12 @@ if (!supabaseUrl || !supabaseServiceKey) {
     }
 }
 
-// Service role client bypasses RLS and handles backend verifications
 export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
     auth: {
         autoRefreshToken: false,
         persistSession: false
+    },
+    realtime: {
+        transport: WebSocket as any
     }
 });
